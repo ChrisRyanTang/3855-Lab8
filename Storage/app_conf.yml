@@ -1,7 +1,7 @@
 version: 1
 datastore:
   user: 'Kris'
-  password: 'Kiwi!0313'
+  password: ''
   hostname: 'localhost'
   port: '3306'
   db: 'reviews_db'
