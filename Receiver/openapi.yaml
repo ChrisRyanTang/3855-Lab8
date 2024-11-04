@@ -1,0 +1,108 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: 'Steam User Reviews'
+  description: 'Simple API for managing Steam Reviews'
+  contact:
+    email: ctang93@my.bcit.ca
+tags:
+  - name: reviews
+    description: User reviews on Steam
+
+paths:
+  /users/user_reviews:
+    post:
+      tags:
+        - reviews 
+      summary: Gather reviews from users
+      operationId: app.get_all_reviews
+      description: Retrieves all the Steam user reviews
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+      responses:
+        '201':
+          description: A list of all reviews
+        '400':
+          description: Unable to list all reviews
+
+  /users/reviews/rating_game:
+    post:
+      tags:
+        - reviews
+      summary: Rating a game
+      operationId: app.rating_game
+      description: Thumbs up or Thumbs down a game
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameRating'
+      responses:
+        '201':
+          description: Game Rated
+        '400':
+          description: Couldn't connect to server
+
+components:
+  schemas:
+    Review:
+      required:
+        - steam_id
+        - username
+        - review
+        - rating
+        - game_id
+      properties:
+        steam_id:
+          type: string
+          format: uuid
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+        username:
+          type: string
+          example: 'DookyTooky'
+        review:
+          type: string
+          example: 'Dead game!'
+        rating:
+          type: string
+          enum:
+            - thumbs up
+            - thumbs down
+          example: thumbs down
+        game_id:
+          type: integer
+          example: 570
+        trace_id:
+          type: string
+          format: uuid
+      type: object
+
+    GameRating:
+      required:
+        - game_id
+        - game_name
+        - rating
+        - num_reviews
+      properties:
+        game_id:
+          type: integer
+          example: 570
+        game_name:
+          type: string
+          example: 'Black Myth: Wukong'
+        rating:
+          type: string
+          enum:
+            - thumbs up
+            - thumbs down
+          example: thumbs down
+        num_reviews:
+          type: integer
+          example: 5001
+        trace_id:
+          type: string
+          format: uuid
+      type: object

@@ -1,0 +1,9 @@
+version: 1
+datastore:
+  filename: data.json
+scheduler:
+  period_sec: 5
+eventstore1:
+  url: http://localhost:8090/users/user_reviews
+eventstore2:
+  url: http://localhost:8090/users/reviews/rating_game

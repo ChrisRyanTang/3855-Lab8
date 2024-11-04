@@ -1,0 +1,65 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: 'Steam User Reviews'
+  description: 'Simple API for managing Steam Reviews'
+  contact:
+    email: ctang93@my.bcit.ca
+tags:
+  - name: reviews
+    description: User reviews on Steam
+  - name: stats
+    description: Event statistics
+
+paths:
+  /stats:
+    get:
+      tags:
+        - stats
+      summary: Get event statistics
+      operationId: app.get_stats
+      description: Retrieves the processed statistics from the Processing Service
+      responses:
+        '200':
+          description: Successfully returned event statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadingStats'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+components:
+  schemas:
+    ReadingStats:
+      type: object
+      required:
+        - num_reviews
+        - num_ratings
+        - thumbs_up_count
+        - thumbs_down_count
+        - last_updated
+      properties:
+        num_reviews:
+          type: integer
+          example: 500
+        num_ratings:
+          type: integer
+          example: 300
+        thumbs_up_count:
+          type: integer
+          example: 250
+        thumbs_down_count:
+          type: integer
+          example: 50
+        last_updated:
+          type: string
+          format: date-time
+          example: '2024-10-01T12:30:00Z'

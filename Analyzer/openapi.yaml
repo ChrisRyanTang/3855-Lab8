@@ -1,0 +1,165 @@
+openapi: 3.0.0
+info:
+  description: This API provides analyzer info
+  version: "1.0.0"
+  title: Analyzer API
+  contact:
+    email: ctang93@my.bcit.ca
+
+paths:
+  /users/user_reviews:
+    get:
+      summary: Get user reviews from Steam
+      operationId: app.get_all_reviews_readings
+      description: Gets all reviews from the event store
+      parameters:
+        - name: index
+          in: query
+          description: Gets the review at the given index in the event store
+          schema:
+            type: integer
+            example: 500
+      responses:
+        '200':
+          description: Successfully returned a review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserReviews'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /users/reviews/rating_game:
+    get:
+      summary: Get game ratings from Steam
+      operationId: app.rating_game_readings
+      description: Gets all game ratings from the event store
+      parameters:
+        - name: index
+          in: query
+          description: Gets the game rating at the given index in the event store
+          schema:
+            type: integer
+            example: 200
+      responses:
+        '200':
+          description: Successfully returned a game rating
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameRatings'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /stats:
+    get:
+      summary: Get the event stats
+      operationId: app.get_event_stats
+      description: Retrieve statistics for all events
+      responses:
+        '200':
+          description: Successfully returned the event stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stats'
+
+components:
+  schemas:
+    UserReviews:
+      required:
+        - steam_id
+        - username
+        - review
+        - rating
+        - game_id
+      properties:
+        steam_id:
+          type: string
+          format: uuid
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+        username:
+          type: string
+          example: 'DookyTooky'
+        review:
+          type: string
+          example: 'Dead game!'
+        rating:
+          type: string
+          enum:
+            - thumbs up
+            - thumbs down
+          example: thumbs down
+        game_id:
+          type: integer
+          example: 570
+        trace_id:
+          type: string
+          format: uuid
+      type: object
+
+    GameRatings:
+      required:
+        - game_id
+        - game_name
+        - rating
+        - num_reviews
+      properties:
+        game_id:
+          type: integer
+          example: 570
+        game_name:
+          type: string
+          example: 'Dota 2'
+        rating:
+          type: string
+          enum:
+            - thumbs up
+            - thumbs down
+          example: thumbs down
+        num_reviews:
+          type: integer
+          example: 5001
+        trace_id:
+          type: string
+          format: uuid
+      type: object
+
+    Stats:
+      required:
+        - num_reviews
+        - num_ratings
+        - thumbs_up_count
+        - thumbs_down_count
+        - last_updated
+      properties:
+        num_reviews:
+          type: integer
+          example: 500
+        num_ratings:
+          type: integer
+          example: 300
+        thumbs_up_count:
+          type: integer
+          example: 250
+        thumbs_down_count:
+          type: integer
+          example: 50
+        last_updated:
+          type: string
+          format: date-time
+          example: '2024-10-01T12:30:00Z'

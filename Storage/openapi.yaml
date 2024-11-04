@@ -1,0 +1,151 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: 'Steam User Reviews'
+  description: 'Simple API for managing Steam Reviews'
+  contact:
+    email: ctang93@my.bcit.ca
+tags:
+  - name: reviews
+    description: User reviews on Steam
+
+paths:
+  /users/user_reviews:
+    get:
+      summary: hola
+      operationId: app.get_all_reviews_readings
+      description: Retrieves all the Steam user reviews
+      parameters:
+        - name: start_timestamp
+          in: query
+          description: Start timestamp
+          schema:
+            type: string
+            format: date-time
+            example: 2024-01-01T00:00:00Z
+        - name: end_timestamp
+          in: query
+          description: End timestamp
+          schema:
+            type: string
+            format: date-time
+            example: 2024-01-01T00:00:00Z
+      responses:
+        '200':
+          description: A list of all reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/Review'
+        '400':
+          description: Unable to list all reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+
+  /users/reviews/rating_game:
+    get:
+      summary: hola
+      operationId: app.rating_game_readings
+      description: list of game rating
+      parameters:
+        - name: start_timestamp
+          in: query
+          description: Start timestamp
+          schema:
+            type: string
+            format: date-time
+            example: 2024-01-01T00:00:00Z
+        - name: end_timestamp
+          in: query
+          description: End timestamp
+          schema:
+            type: string
+            format: date-time
+            example: 2024-02-02T00:00:00Z
+      responses:
+        '200':
+          description: A list of all game ratings
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/GameRating'
+        '400':
+          description: Unable to list of game ratings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+components:
+  schemas:
+    Review:
+      required:
+        - steam_id
+        - username
+        - review
+        - rating
+        - game_id
+      properties:
+        steam_id:
+          type: string
+          format: uuid
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+        username:
+          type: string
+          example: 'DookyTooky'
+        review:
+          type: string
+          example: 'Dead game!'
+        rating:
+          type: string
+          enum:
+            - thumbs up
+            - thumbs down
+          example: thumbs down
+        game_id:
+          type: integer
+          example: 570
+        trace_id:
+          type: string
+          format: uuid
+      type: object
+
+    GameRating:
+      required:
+        - game_id
+        - game_name
+        - rating
+        - num_reviews
+      properties:
+        game_uuid:
+          type: integer
+          example: 570
+        game_name:
+          type: string
+          example: 'Black Myth: Wukong'
+        rating:
+          type: string
+          enum:
+            - thumbs up
+            - thumbs down
+          example: thumbs down
+        num_reviews:
+          type: integer
+          example: 5001
+        trace_id:
+          type: string
+          format: uuid
+      type: object
