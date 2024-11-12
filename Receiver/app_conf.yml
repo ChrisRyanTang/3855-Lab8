@@ -1,8 +1,8 @@
 version: 1
 eventstore1:
-  url: 'http://localhost:8090/users/user_reviews'
+  url: 'http://kafka-3855.westus2.cloudapp.azure.com:8090/users/user_reviews'
 eventstore2:
-  url: 'http://localhost:8090/users/reviews/rating_game'
+  url: 'http://kafka-3855.westus2.cloudapp.azure.com:8090/users/reviews/rating_game'
 events:
   hostname: 'kafka-3855.westus2.cloudapp.azure.com'
   port: 9092

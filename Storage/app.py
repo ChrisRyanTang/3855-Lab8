@@ -3,7 +3,7 @@ import yaml
 import logging
 import logging.config
 import json
-from threading import Thread   
+from threading import Thread
 from kafka import KafkaProducer
 from pykafka import KafkaClient
 from pykafka.common import OffsetType
@@ -36,7 +36,7 @@ Base.metadata.create_all(DB_ENGINE)
 
 
 producer = KafkaProducer(
-    bootstrap_servers=[app_config['kafka']['server']],
+    bootstrap_servers=[f"{app_config['events']['hostname']}:{app_config['events']['port']}"],
     value_serializer=lambda v: json.dumps(v).encode('utf-8')
 )
 
@@ -71,7 +71,7 @@ def process_messages():
                     review = payload['review'],
                     rating = payload['rating'],
                     game_id = payload['game_id'],
-                    trace_id = payload['trace_id']              
+                    trace_id = payload['trace_id']
                 )
                 session.add(gr)
                 session.commit()
@@ -96,34 +96,34 @@ def process_messages():
 def get_all_reviews_readings(start_timestamp, end_timestamp):
     session = DB_SESSION()
     reviews_list = []
-    
+
     try:
         start_time = datetime.strptime(start_timestamp, "%Y-%m-%dT:%H:%M:%S")
         end_time = datetime.strptime(end_timestamp, "%Y-%m-%dT:%H:%M:%S")
-    
+
 
         results = session.query(Review).filter(
             and_(Review.date_created >= start_time,
             Review.date_created < end_time)
-        ).all() 
+        ).all()
 
         logger.info(f"Returned {len(reviews_list)} reviews between {start_timestamp} and {end_timestamp}")
-        
+
         for reading in results:
             reviews_list.append(reading.to_dict())
-        
+
         session.close()
 
     except Exception as e:
         logger.error(e)
-        
+
     logger.info(f"Returned {len(reviews_list)} reviews between {start_timestamp} and {end_timestamp}")
     return reviews_list, 200
 
 def rating_game_readings(start_timestamp, end_timestamp):
     session = DB_SESSION()
     ratings_list = []
-    
+
     try:
         start_time = datetime.strptime(start_timestamp, "%Y-%m-%dT:%H:%M:%S")
         end_time = datetime.strptime(end_timestamp, "%Y-%m-%dT:%H:%M:%S")
@@ -153,5 +153,4 @@ if __name__ == '__main__':
     t1 = Thread(target=process_messages)
     t1.setDaemon(True)
     t1.start()
-    app.run(port=8090)
-
+    app.run(port=8090, host='0.0.0.0')
