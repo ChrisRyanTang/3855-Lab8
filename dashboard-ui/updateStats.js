@@ -2,8 +2,8 @@
 
 const STATS_API_URL = "http://kafka-3855.westus2.cloudapp.azure.com:8100/stats"
 const EVENTS_URL = {
-    reviews: "http://localhost:8110/users/user_reviews",
-    ratings: "http://localhost:8110/users/reviews/rating_game"
+    reviews: "http://kafka-3855.westus2.cloudapp.azure.com:8110/users/user_reviews",
+    ratings: "http://kafka-3855.westus2.cloudapp.azure.com:8110/users/reviews/rating_game"
 }
 
 // This function fetches and updates the general statistics
