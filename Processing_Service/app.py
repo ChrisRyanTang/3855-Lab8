@@ -4,6 +4,8 @@ import yaml
 import logging
 import logging.config
 import connexion
+from connexion.middleware import MiddlewarePosition
+from starlette.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 
@@ -111,7 +113,20 @@ app.add_api('openapi.yaml', strict_validation=True, validate_responses=True)
 if __name__ == '__main__':
     init_scheduler()
 <<<<<<< HEAD
+<<<<<<< HEAD
     app.run(port=8100, host='0.0.0.0')
 =======
     app.run(port=8100, host='0.0.0.0')
 >>>>>>> f970313b061d5ee186037d8117883270e7188cd8
+=======
+    app.run(port=8100, host='0.0.0.0')
+
+    app.add_middleware(
+        CORSMiddleware,
+        position=MiddlewarePosition.BEFORE_EXCEPTION,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+>>>>>>> d719b5dec3b28d1a224405307db83145c775cc55
