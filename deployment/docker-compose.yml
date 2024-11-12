@@ -67,5 +67,13 @@ services:
     depends_on:
       - "kafka"
 
+  dashboard:
+    image: dashboard
+    ports:
+      - "8888:80"
+    depends_on:
+      - "processing"
+      - "analyzer"
+
 volumes:
   my-db:
