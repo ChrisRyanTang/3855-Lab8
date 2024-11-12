@@ -1,6 +1,12 @@
 # import sqlite3
 import mysql.connector
 import yaml
+<<<<<<< HEAD
+=======
+
+with open('app_conf.yml', 'r') as f:
+    app_config = yaml.safe_load(f.read())
+>>>>>>> f970313b061d5ee186037d8117883270e7188cd8
 
 with open('app_conf.yml', 'r') as f:
     app_config = yaml.safe_load(f.read())

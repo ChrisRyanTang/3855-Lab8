@@ -18,7 +18,7 @@ with open('app_conf.yml', 'r') as f:
 with open('log_conf.yml', 'r') as f:
     log_config = yaml.safe_load(f.read())
     logging.config.dictConfig(log_config)
-    
+
 logger = logging.getLogger('basicLogger')
 
 
@@ -35,14 +35,14 @@ def producer(event_type, reading):
     msg_str = json.dumps(msg)
     producer.produce(msg_str.encode('utf-8'))
     logger.info(f"Produced event get_all_reviews to Kafka with trace_id: {reading['trace_id']}")
-    
+
     return NoContent, 201
 
 def get_all_reviews(body):
     trace_id = str(uuid.uuid4())
     body['trace_id'] = trace_id
     logger.info(f"get_all_reviews event with body: {body} ")
-    
+
     producer("get_all_reviews", body)
 
     return NoContent, 201
@@ -52,7 +52,7 @@ def rating_game(body):
     trace_id = str(uuid.uuid4())
     body['trace_id'] = trace_id
     logger.info(f"rating_game event with body: {body} ")
-    
+
     producer("rating_game", body)
 
     return NoContent, 201
@@ -62,5 +62,9 @@ app = connexion.FlaskApp(__name__, specification_dir='')
 app.add_api('openapi.yaml', strict_validation=True, validate_responses=True)
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     app.run(port=8080, host='0.0.0.0')
 
+=======
+    app.run(port=8080, host='0.0.0.0')
+>>>>>>> f970313b061d5ee186037d8117883270e7188cd8

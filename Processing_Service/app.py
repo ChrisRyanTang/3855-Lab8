@@ -110,4 +110,8 @@ app.add_api('openapi.yaml', strict_validation=True, validate_responses=True)
 
 if __name__ == '__main__':
     init_scheduler()
+<<<<<<< HEAD
     app.run(port=8100, host='0.0.0.0')
+=======
+    app.run(port=8100, host='0.0.0.0')
+>>>>>>> f970313b061d5ee186037d8117883270e7188cd8

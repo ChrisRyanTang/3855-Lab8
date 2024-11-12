@@ -47,7 +47,7 @@ def get_all_reviews_readings(index):
                 if count == index:
                     logger.info(f"Returning get_all_reviews at index {index}")
                     return event['payload'], 200
-                count += 1 
+                count += 1
     except Exception as e:
         logger.error(f"Error retrieving get_all_reviews at index {index}: {str(e)}")
     return {"message": "Not Found"}, 404
@@ -90,4 +90,8 @@ app = connexion.FlaskApp(__name__, specification_dir='.')
 app.add_api('openapi.yaml')
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     app.run(port=8110, host='0.0.0.0')
+=======
+    app.run(port=8110, host='0.0.0.0')
+>>>>>>> f970313b061d5ee186037d8117883270e7188cd8

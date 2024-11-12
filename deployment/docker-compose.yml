@@ -69,4 +69,7 @@ services:
 
 volumes:
   my-db:
+<<<<<<< HEAD
 
+=======
+>>>>>>> f970313b061d5ee186037d8117883270e7188cd8
