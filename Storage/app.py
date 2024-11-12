@@ -36,7 +36,7 @@ Base.metadata.create_all(DB_ENGINE)
 
 
 producer = KafkaProducer(
-    bootstrap_servers=[app_config['kafka']['server']],
+    bootstrap_servers=[f"{app_config['events']['hostname']}:{app_config['events']['port']}"],
     value_serializer=lambda v: json.dumps(v).encode('utf-8')
 )
 
@@ -153,5 +153,5 @@ if __name__ == '__main__':
     t1 = Thread(target=process_messages)
     t1.setDaemon(True)
     t1.start()
-    app.run(port=8090)
+    app.run(port=8090, host='0.0.0.0')
 
