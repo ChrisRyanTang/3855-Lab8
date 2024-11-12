@@ -92,13 +92,6 @@ app = connexion.FlaskApp(__name__, specification_dir='.')
 app.add_api('openapi.yaml')
 
 if __name__ == '__main__':
-<<<<<<< HEAD
-<<<<<<< HEAD
-    app.run(port=8110, host='0.0.0.0')
-=======
-    app.run(port=8110, host='0.0.0.0')
->>>>>>> f970313b061d5ee186037d8117883270e7188cd8
-=======
     app.run(port=8110, host='0.0.0.0')
 
     app.add_middleware(
@@ -109,4 +102,3 @@ if __name__ == '__main__':
         allow_methods=["*"],
         allow_headers=["*"],
     )
->>>>>>> d719b5dec3b28d1a224405307db83145c775cc55
