@@ -1,9 +1,9 @@
 /* UPDATE THESE VALUES TO MATCH YOUR SETUP */
 
-const STATS_API_URL = "http://localhost:8889/statistics"
+const STATS_API_URL = "http://kafka-3855.westus2.cloudapp.azure.com:8110/stats"
 const EVENTS_URL = {
-    snow: "http://localhost:8889/snow",
-    lift: "http://localhost:8889/lift"
+    reviews: "http://kafka-3855.westus2.cloudapp.azure.com:8110/users/user_reviews",
+    ratings: "http://kafka-3855.westus2.cloudapp.azure.com:8110/users/reviews/rating_game"
 }
 
 // This function fetches and updates the general statistics
@@ -88,14 +88,14 @@ const updateStatsHTML = (data, error = false) => {
 const setup = () => {
     const interval = setInterval(() => {
         getStats(STATS_API_URL)
-        getEvent("snow")
-        getEvent("lift")
+        getEvent("reviews")
+        getEvent("ratings")
     }, 5000); // Update every 5 seconds
 
     // initial call
     getStats(STATS_API_URL)
-    getEvent("snow")
-    getEvent("lift")
+    getEvent("reviews")
+    getEvent("ratings")
     // clearInterval(interval);
 }
 
