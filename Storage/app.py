@@ -153,9 +153,4 @@ if __name__ == '__main__':
     t1 = Thread(target=process_messages)
     t1.setDaemon(True)
     t1.start()
-<<<<<<< HEAD
     app.run(port=8090, host='0.0.0.0')
-
-=======
-    app.run(port=8090, host='0.0.0.0')
->>>>>>> f970313b061d5ee186037d8117883270e7188cd8
