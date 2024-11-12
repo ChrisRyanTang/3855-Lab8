@@ -14,7 +14,7 @@ services:
     environment:
       KAFKA_CREATE_TOPICS: "events:1:1"
       KAFKA_ADVERTISED_HOST_NAME: kafka-3855.westus2.cloudapp.azure.com
-      KAFKA_LISTENERS: INSIDE://:29092,OUTSIDE://:9092
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:29092,OUTSIDE://kafka-3855.westus2.cloudapp.azure.com:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
@@ -36,6 +36,36 @@ services:
       - '3306:3306'
     volumes:
       - my-db:/var/lib/mysql
+
+  receiver:
+    image: receiver
+    ports:
+      - "8080:8080"
+    depends_on:
+      - "kafka"
+
+  storage:
+    image: storage
+    ports:
+      - "8090:8090"
+    depends_on:
+      - "kafka"
+      - "db"
+
+  processing:
+    image: processing
+    ports:
+      - "8100:8100"
+    network_mode: host
+    depends_on:
+      - "storage"
+
+  analyzer:
+    image: analyzer
+    ports:
+      - "8110:8110"
+    depends_on:
+      - "kafka"
 
 volumes:
   my-db:

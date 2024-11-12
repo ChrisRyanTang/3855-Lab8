@@ -2,7 +2,7 @@ version: 1
 datastore:
   user: 'Kris'
   password: 'Kiwi!0313'
-  hostname: 'localhost'
+  hostname: 'kafka-3855.westus2.cloudapp.azure.com'
   port: '3306'
   db: 'reviews_db'
 kafka:

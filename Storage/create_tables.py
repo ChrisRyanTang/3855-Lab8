@@ -1,10 +1,20 @@
 # import sqlite3
 import mysql.connector
+import yaml
+
+with open('app_conf.yml', 'r') as f:
+    app_config = yaml.safe_load(f.read())
 
 # conn = sqlite3.connect('reviews.db')
 # c = conn.cursor()
 
-db_conn = mysql.connector.connect(host="localhost", user="Kris", password="Kiwi!0313", database="reviews_db")
+db_conn = mysql.connector.connect(
+    host=app_config['datastore']['hostname'],
+    user=app_config['datastore']['user'],
+    password=app_config['datastore']['password'],
+    database=app_config['datastore']['db'],
+    port=app_config['datastore']['port']
+)
 db_cursor = db_conn.cursor()
 
 db_cursor.execute('''
