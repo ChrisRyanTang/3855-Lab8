@@ -70,7 +70,7 @@ services:
   dashboard:
     image: dashboard
     ports:
-      - "8888:80"
+      - "3000:3000"
     depends_on:
       - "processing"
       - "analyzer"
