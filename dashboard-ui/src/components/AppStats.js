@@ -35,12 +35,12 @@ export default function AppStats() {
                 <table className={"StatsTable"}>
 					<tbody>
 						<tr>
-							<th>Blood Pressure</th>
-							<th>Heart Rate</th>
+							<th>Game Ratings</th>
+							<th>Game Reviews</th>
 						</tr>
 						<tr>
-							<td># BP: {stats['num_ratings']}</td>
-							<td># HR: {stats['num_reviews']}</td>
+							<td># Rating: {stats['num_ratings']}</td>
+							<td># Review: {stats['num_reviews']}</td>
 						</tr>
 						<tr>
 							<td colspan="2">Max Number of ratings: {stats['num_ratings']}</td>

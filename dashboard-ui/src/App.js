@@ -1,12 +1,13 @@
 import logo from './logo.png';
 import './App.css';
+import React from 'react';
 
 import EndpointAnalyzer from './components/EndpointAnalyzer'
 import AppStats from './components/AppStats'
 
 function App() {
 
-    const endpoints = ["/users/reviews/rating_game", "/users/user_reviews"]
+    const endpoints = ["users/reviews/rating_game", "users/user_reviews"]
 
     const rendered_endpoints = endpoints.map((endpoint) => {
         return <EndpointAnalyzer key={endpoint} endpoint={endpoint}/>
