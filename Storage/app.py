@@ -3,6 +3,7 @@ import yaml
 import logging
 import logging.config
 import json
+import time
 from threading import Thread
 from kafka import KafkaProducer
 from pykafka import KafkaClient
@@ -47,13 +48,30 @@ def send_kafka_message(topic, message):
 
 
 def process_messages():
-    client = KafkaClient(hosts=f"{app_config['events']['hostname']}:{app_config['events']['port']}")
-    topic = client.topics[str.encode(app_config['events']['topic'])]
-    consumer = topic.get_simple_consumer(
-        consumer_group=b'event_group',
-        reset_offset_on_start=False,
-        auto_offset_reset=OffsetType.LATEST
-    )
+    max_retries = app_config['events']['max_retries']
+    retry_delay = app_config['events']['retry_delay']
+    retry_count = 0
+
+    while retry_count < max_retries:
+        try:
+            logger.info(f"Attempting to connect to Kafka (Attempt {retry_count + 1}/{max_retries})")
+            client = KafkaClient(hosts=f"{app_config['events']['hostname']}:{app_config['events']['port']}")
+            topic = client.topics[str.encode(app_config['events']['topic'])]
+            consumer = topic.get_simple_consumer(
+                consumer_group=b'event_group',
+                reset_offset_on_start=False,
+                auto_offset_reset=OffsetType.LATEST
+            )
+            logger.info("Connected to Kafka")
+            break
+        except Exception as e:
+            logger.error(f"Error connecting to Kafka: {e}")
+            retry_count += 1
+            time.sleep(retry_delay)
+    
+    if retry_count == max_retries:
+        logger.error("Could not connect to Kafka. Exiting...")
+        return
 
     for msg in consumer:
         if msg is not None:
