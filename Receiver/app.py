@@ -20,7 +20,6 @@ with open('log_conf.yml', 'r') as f:
 
 logger = logging.getLogger('basicLogger')
 
-producer = None
 
 def init_kafka_client():
     """
@@ -46,6 +45,8 @@ def init_kafka_client():
 
     logger.error("Exceeded maximum retries for connecting to Kafka.")
     raise ConnectionError("Unable to establish Kafka connection after retries.")
+
+producer = init_kafka_client() 
 
 def produce_event(event):
     """
