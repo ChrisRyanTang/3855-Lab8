@@ -20,29 +20,50 @@ with open('log_conf.yml', 'r') as f:
 
 logger = logging.getLogger('basicLogger')
 
+producer = None
+
 def init_kafka_client():
-    while True:
+    """
+    Initialize the Kafka client and producer with retry logic.
+    """
+    global producer
+    retries = app_config['kafka']['retries']
+    retry_interval = app_config['kafka']['retry_interval']
+    current_retry = 0
+
+    while current_retry < retries:
         try:
+            logger.info(f"Attempting to connect to Kafka (Retry {current_retry + 1}/{retries})...")
             client = KafkaClient(hosts=f"{app_config['events']['hostname']}:{app_config['events']['port']}")
             topic = client.topics[str.encode(app_config['events']['topic'])]
             producer = topic.get_sync_producer()
-            return producer
+            logger.info("Kafka producer initialized successfully.")
+            return
         except Exception as e:
-            logger.error(f"Failed to connect to Kafka: {e}")
-            time.sleep(5)  # Retry after 5 seconds
+            logger.error(f"Failed to connect to Kafka: {e}. Retrying in {retry_interval} seconds...")
+            current_retry += 1
+            time.sleep(retry_interval)
 
-producer = init_kafka_client()
+    logger.error("Exceeded maximum retries for connecting to Kafka.")
+    raise ConnectionError("Unable to establish Kafka connection after retries.")
 
 def produce_event(event):
+    """
+    Produce an event to the Kafka topic.
+    """
+    global producer
     try:
         producer.produce(event.encode('utf-8'))
+        logger.info("Event produced successfully.")
     except Exception as e:
-        logger.error(f"Failed to produce event: {e}")
-        global producer
-        producer = init_kafka_client()  # Reinitialize Kafka client and producer
+        logger.error(f"Failed to produce event: {e}. Reinitializing Kafka producer...")
+        init_kafka_client()
         producer.produce(event.encode('utf-8'))
 
 def produce_event_with_type(event_type, reading):
+    """
+    Compose and produce an event with its type and payload.
+    """
     try:
         msg = {
             'type': event_type,

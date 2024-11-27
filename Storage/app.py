@@ -29,7 +29,10 @@ logger = logging.getLogger('basicLogger')
 
 
 DB_ENGINE = create_engine(
-    f"mysql+pymysql://{app_config['datastore']['user']}:{app_config['datastore']['password']}@{app_config['datastore']['hostname']}:{app_config['datastore']['port']}/{app_config['datastore']['db']}"
+    f"mysql+pymysql://{app_config['datastore']['user']}:{app_config['datastore']['password']}@{app_config['datastore']['hostname']}:{app_config['datastore']['port']}/{app_config['datastore']['db']}",
+    pool_recycle=600,
+    pool_size=5,
+    pool_pre_ping=True
 )
 Base.metadata.bind = DB_ENGINE
 DB_SESSION = sessionmaker(bind=DB_ENGINE)
@@ -97,6 +100,7 @@ def process_messages():
                 logger.info(f"Stored review: {payload['review']}")
 
             elif msg["type"] == "rating_game":
+                session = DB_SESSION()
                 rg = Rating(
                     game_id = payload['game_id'],
                     game_name = payload['game_name'],

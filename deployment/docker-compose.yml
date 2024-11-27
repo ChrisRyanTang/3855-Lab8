@@ -4,6 +4,8 @@ services:
     ports:
       - "2181"
     hostname: zookeeper
+    volumes:
+      - /home/Kris/zookeeper/data:/opt/zookeeper-3.4.13/data
 
   kafka:
     image: wurstmeister/kafka
@@ -19,8 +21,11 @@ services:
       KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:29092,OUTSIDE://kafka-3855.westus2.cloudapp.azure.com:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LOG_DIRS: /kafka/kafka-logs
+      KAFKA_BROKER_ID: 1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /home/Kris/kafka:/kafka/kafka-logs
     depends_on:
       - "zookeeper"
 

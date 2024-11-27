@@ -24,7 +24,7 @@ export default function EndpointAnalyzer(props) {
 	useEffect(() => {
 		const interval = setInterval(() => getAnalyzer(), 4000); // Update every 4 seconds
 		return() => clearInterval(interval);
-    }, []);
+    }, [getAnalyzer]);
 
     if (error){
         return (<div className={"error"}>Error found when fetching from API</div>)
