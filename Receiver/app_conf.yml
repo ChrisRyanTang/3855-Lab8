@@ -7,3 +7,6 @@ events:
   hostname: 'kafka-3855.westus2.cloudapp.azure.com'
   port: 9092
   topic: events
+kafka:
+  retries: 5
+  retry_interval: 10
