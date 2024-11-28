@@ -1,0 +1,15 @@
+thresholds:
+  get_all_reviews:
+    min: 0
+    max: 100
+  rating_game:
+    min: 1
+    max: 10
+
+events:
+  topic: "events"
+  hostname: "kafka-3855.westus2.cloudapp.azure.com"
+  port: 9092
+
+datastore:
+  filepath: "anomalies.json"

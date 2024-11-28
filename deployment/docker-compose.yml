@@ -79,6 +79,13 @@ services:
     depends_on:
       - "processing"
       - "analyzer"
+  
+  anomaly:
+    image: anomaly
+    ports:
+      - "8120:8120"
+    depends_on:
+      - "kafka"
 
 volumes:
   my-db:
