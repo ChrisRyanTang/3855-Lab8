@@ -50,6 +50,7 @@ services:
       - TARGET_ENV=test
     volumes:
       - /home/Kris/config/receiver:/config
+      - /home/Kris/logs/receiver:/logs
     depends_on:
       - "kafka"
 
@@ -61,6 +62,7 @@ services:
       - TARGET_ENV=test
     volumes:
       - /home/Kris/config/storage:/config
+      - /home/Kris/logs/storage:/logs
     depends_on:
       - "kafka"
       - "db"
@@ -74,6 +76,7 @@ services:
       - TARGET_ENV=test
     volumes:
       - /home/Kris/config/processing:/config
+      - /home/Kris/logs/processing:/logs
     depends_on:
       - "storage"
 
@@ -85,6 +88,7 @@ services:
       - TARGET_ENV=test
     volumes:
       - /home/Kris/config/analyzer:/config
+      - /home/Kris/logs/analyzer:/logs
     depends_on:
       - "kafka"
 
@@ -104,6 +108,7 @@ services:
       - TARGET_ENV=test
     volumes:
       - /home/Kris/config/anomaly:/config
+      - /home/Kris/logs/anomaly:/logs
     depends_on:
       - "kafka"
 
