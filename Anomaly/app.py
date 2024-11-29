@@ -72,7 +72,7 @@ def process_event(event):
             "trace_id": trace_id,
             "anomaly_type": "Too High",
             "description": f"Value {value} exceeds max threshold {thresholds['max']}",
-            "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+            "timestamp": datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
         }
     elif value < thresholds['min']:
         anomaly = {
@@ -80,7 +80,7 @@ def process_event(event):
             "trace_id": trace_id,
             "anomaly_type": "Too Low",
             "description": f"Value {value} below min threshold {thresholds['min']}",
-            "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+            "timestamp": datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
         }
 
     if anomaly:

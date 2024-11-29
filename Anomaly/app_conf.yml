@@ -1,10 +1,10 @@
 thresholds:
   get_all_reviews:
-    min: 1
-    max: 10
+    min: 10
+    max: 50
   rating_game:
-    min: 0
-    max: 5
+    min: 1
+    max: 100
 
 events:
   topic: "events"
@@ -12,4 +12,4 @@ events:
   port: 9092
 
 datastore:
-  filepath: "anomalies.json"
+  filepath: "/app/anomalies.json"
