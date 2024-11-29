@@ -47,6 +47,10 @@ export default function AppStats() {
         };
     }, [eventType]);
 
+    useEffect(() => {
+        getAnomalies();
+    }, [eventType]); 
+
     if (error) {
         return <div className="error">Error fetching stats from API</div>;
     } else if (isLoaded === false) {
@@ -87,36 +91,30 @@ export default function AppStats() {
                 <option value="rating_game">Rating Game</option>
             </select>
 
-            {anomaliesError && (
-                <div className="error">Error fetching anomalies from API</div>
-            )}
-
-            {anomaliesLoaded === false ? (
-                <div>Loading anomalies...</div>
-            ) : anomalies.length > 0 ? (
-                <table className="AnomaliesTable">
-                    <thead>
-                        <tr>
-                            <th>Event Type</th>
-                            <th>Anomaly Type</th>
-                            <th>Description</th>
-                            <th>Timestamp</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {anomalies.map((anomaly, index) => (
-                            <tr key={index}>
-                                <td>{anomaly.event_type}</td>
-                                <td>{anomaly.anomaly_type}</td>
-                                <td>{anomaly.description}</td>
-                                <td>{anomaly.timestamp}</td>
+            {anomalies.length > 0 ? (
+                    <table className={"AnomaliesTable"}>
+                        <thead>
+                            <tr>
+                                <th>Trace ID</th>
+                                <th>Anomaly Type</th>
+                                <th>Description</th>
+                                <th>Timestamp</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            ) : (
-                <p>No anomalies found for event type "{eventType}".</p>
-            )}
-        </div>
-    );
+                        </thead>
+                        <tbody>
+                            {anomalies.map((anomaly, index) => (
+                                <tr key={index}>
+                                    <td>{anomaly.trace_id}</td>
+                                    <td>{anomaly.anomaly_type}</td>
+                                    <td>{anomaly.description}</td>
+                                    <td>{anomaly.timestamp}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <div>No anomalies found for event type "{eventType}".</div>
+                )}
+            </div>
+        );
 }
