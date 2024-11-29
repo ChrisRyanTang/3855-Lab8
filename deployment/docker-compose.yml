@@ -84,6 +84,8 @@ services:
     image: anomaly
     ports:
       - "8120:8120"
+    volumes:
+      - ./anomalies.json:/app/anomalies.json
     depends_on:
       - "kafka"
 

@@ -1,10 +1,10 @@
 thresholds:
   get_all_reviews:
-    min: 0
-    max: 100
-  rating_game:
     min: 1
     max: 10
+  rating_game:
+    min: 0
+    max: 5
 
 events:
   topic: "events"
