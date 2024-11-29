@@ -26,7 +26,7 @@ export default function AppStats() {
     }
 
     const getAnomalies = () => {
-        fetch(`http://localhost:8120/anomalies?event_type=${eventType}`)
+        fetch(`http://kafka-3855.westus2.cloudapp.azure.com:8120/anomalies?event_type=${eventType}`)
             .then((res) => res.json())
             .then((result) => {
                 console.log('Received Anomalies');
