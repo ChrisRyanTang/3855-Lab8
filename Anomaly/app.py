@@ -42,6 +42,22 @@ rating_game_thresholds = app_config["thresholds"]["rating_game"]
 
 # JSON Data Store
 DATA_STORE = app_config['datastore']['filepath']
+kafka_consumer = None
+
+def init_kafka_consumer():
+    """Initialize the Kafka consumer."""
+    global kafka_consumer
+    kafka_hostname = f"{app_config['events']['hostname']}:{app_config['events']['port']}"
+    client = KafkaClient(hosts=kafka_hostname)
+    topic = client.topics[str.encode(app_config["events"]["topic"])]
+
+    kafka_consumer = topic.get_simple_consumer(
+        reset_offset_on_start=False,
+        consumer_timeout_ms=1000,
+        auto_offset_reset=OffsetType.LATEST
+    )
+    logger.info("Kafka consumer initialized.")
+
 
 def make_json_file():
     """Ensure the JSON anomaly file exists."""
@@ -68,18 +84,9 @@ def save_anomaly(anomaly):
 
 def process_events_from_kafka():
     """Fetch events from Kafka and process them."""
-    kafka_hostname = f"{app_config['events']['hostname']}:{app_config['events']['port']}"
-    client = KafkaClient(hosts=kafka_hostname)
-    topic = client.topics[str.encode(app_config["events"]["topic"])]
-
-    consumer = topic.get_simple_consumer(
-        reset_offset_on_start=False,
-        consumer_timeout_ms=1000,
-        auto_offset_reset=OffsetType.LATEST
-    )
-    logger.info("Fetching events from Kafka.")
+    global kafka_consumer
     try:
-        for msg in consumer:
+        for msg in kafka_consumer:
             if msg is not None:
                 event = json.loads(msg.value.decode('utf-8'))
                 process_event(event)
@@ -188,5 +195,7 @@ app.add_middleware(
 )
 
 if __name__ == "__main__":
+    make_json_file()
+    init_kafka_consumer()
     init_scheduler()
     app.run(port=8120, host="0.0.0.0")
