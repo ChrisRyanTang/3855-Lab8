@@ -77,6 +77,7 @@ services:
     volumes:
       - /home/Kris/config/processing:/config
       - /home/Kris/logs/processing:/logs
+      - processing-db:/data
     depends_on:
       - "storage"
 
@@ -89,7 +90,6 @@ services:
     volumes:
       - /home/Kris/config/analyzer:/config
       - /home/Kris/logs/analyzer:/logs
-      - processing-db:/data
     depends_on:
       - "kafka"
 
