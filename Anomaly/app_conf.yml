@@ -1,15 +1,15 @@
 thresholds:
   get_all_reviews:
+    max: 100
     min: 1
-    max: 5
   rating_game:
+    max: 100
     min: 1
-    max: 5
-
 events:
   topic: "events"
   hostname: "kafka-3855.westus2.cloudapp.azure.com"
   port: 9092
-
 datastore:
-  filepath: anomalies.json
+  filepath: "anomalies.json"
+scheduler:
+  period_sec: 10 
