@@ -18,7 +18,7 @@ paths:
           description: The type of anomaly to retrieve
           schema:
             type: string
-            example: TooHigh
+            example: Too_short
       responses:
         '200':
           description: Successfully returned a list of anomalies of the given type

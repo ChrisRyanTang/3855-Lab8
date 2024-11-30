@@ -154,7 +154,7 @@ def get_anomalies(anomaly_type=None):
 
     valid_anomaly_types = ["Too_short", "Too_long", "Low_rating", "High_rating"]
     if anomaly_type and anomaly_type not in valid_anomaly_types:
-        logger.error("Invalid Anomaly Type requested")
+        logger.error(f"Invalid Anomaly Type requested: {anomaly_type}")
         return {"message": "Invalid anomaly type"}, 400
 
     if os.path.isfile(DATA_STORE):
