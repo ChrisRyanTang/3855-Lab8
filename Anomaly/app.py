@@ -103,11 +103,14 @@ def process_event(event):
 def consume_kafka_events():
     """Background thread to consume Kafka events."""
     consumer = get_kafka_consumer()
-    for msg in consumer:
-        if msg is not None:
-            msg_str = msg.value.decode('utf-8')
-            event = json.loads(msg_str)
-            process_event(event)
+    try:
+        for msg in consumer:
+            if msg is not None:
+                msg_str = msg.value.decode('utf-8')
+                event = json.loads(msg_str)
+                process_event(event)
+    except Exception as e:
+        logger.error(f"Error consuming events: {str(e)}")
 
 # REST API endpoints
 def get_anomalies(event_type):
