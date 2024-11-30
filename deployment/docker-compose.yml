@@ -110,9 +110,11 @@ services:
     volumes:
       - /home/Kris/config/anomaly:/config
       - /home/Kris/logs/anomaly:/logs
+      - anomaly-db:/data
     depends_on:
       - "kafka"
 
 volumes:
   my-db:
   processing-db:
+  anomaly-db:
