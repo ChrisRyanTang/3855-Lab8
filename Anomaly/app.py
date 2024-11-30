@@ -4,13 +4,13 @@ import logging
 import logging.config
 from connexion.middleware import MiddlewarePosition
 from starlette.middleware.cors import CORSMiddleware
-from apscheduler.schedulers.background import BackgroundScheduler
 from pykafka import KafkaClient
-from connexion import NoContent
-import json
+from pykafka.common import OffsetType
+from apscheduler.schedulers.background import BackgroundScheduler
 import os
+import json
 from datetime import datetime
-import uuid
+from threading import Thread
 
 # Load configurations
 if "TARGET_ENV" in os.environ and os.environ["TARGET_ENV"] == "test":
@@ -31,132 +31,149 @@ with open(log_conf_file, 'r') as f:
 
 logger = logging.getLogger('basicLogger')
 
-# Configuration Variables
-json_path = app_config['datastore']['filepath']
-kafka_hostname = app_config['events']['hostname']
-kafka_port = app_config['events']['port']
-kafka_topic = app_config['events']['topic']
-high_threshold = app_config['thresholds']['get_all_reviews']['max']
-low_threshold = app_config['thresholds']['get_all_reviews']['min']
+# Kafka Configuration
+get_all_reviews_thresholds = app_config["thresholds"]["get_all_reviews"]
+rating_game_thresholds = app_config["thresholds"]["rating_game"]
 
-# Ensure JSON data file exists
+# JSON Data Store
+DATA_STORE = app_config['datastore']['filepath']
+kafka_consumer = None
+
+def init_kafka_consumer():
+    """Initialize the Kafka consumer."""
+    global kafka_consumer
+    kafka_hostname = f"{app_config['events']['hostname']}:{app_config['events']['port']}"
+    client = KafkaClient(hosts=kafka_hostname)
+    topic = client.topics[str.encode(app_config["events"]["topic"])]
+
+    kafka_consumer = topic.get_simple_consumer(
+        reset_offset_on_start=False,
+        consumer_timeout_ms=1000,
+        auto_offset_reset=OffsetType.LATEST
+    )
+    logger.info("Kafka consumer initialized.")
+
 def make_json_file():
-    if not os.path.isfile(json_path):
-        with open(json_path, 'w') as f:
+    """Ensure the JSON anomaly file exists."""
+    if not os.path.isfile(DATA_STORE):
+        with open(DATA_STORE, 'w') as f:
             json.dump([], f, indent=4)
 
-# Save anomaly to JSON
-def store_anomaly(anomaly):
-    with open(json_path, 'r+') as f:
-        data = json.load(f)
-        data.append(anomaly)
-        f.seek(0)
-        json.dump(data, f, indent=4)
-
-# Process Kafka messages and detect anomalies
-def anomaly_detector():
-    make_json_file()
-    hostname = f"{kafka_hostname}:{kafka_port}"
-    client = KafkaClient(hosts=hostname)
-    topic = client.topics[str.encode(kafka_topic)]
-    consumer = topic.get_simple_consumer(
-        reset_offset_on_start=True,
-        consumer_timeout_ms=1000
-    )
-    logger.info("Anomaly Detector Service is running")
-
+def save_anomaly(anomaly):
+    """Save a detected anomaly to the JSON file."""
     try:
-        for message in consumer:
-            if message is not None:
-                msg = message.value.decode('utf-8')
-                msg = json.loads(msg)
-
-                event_id = str(uuid.uuid4())
-                trace_id = msg["payload"]["trace_id"]
-                event_type = msg["type"]
-                anomalies = []
-
-                if event_type == "get_all_reviews":
-                    review_length = len(msg["payload"]["review"])
-                    if review_length > high_threshold:
-                        anomalies.append({
-                            "event_id": event_id,
-                            "trace_id": trace_id,
-                            "event_type": event_type,
-                            "anomaly_type": "Too Long",
-                            "description": f"Review length {review_length} exceeds high threshold {high_threshold}",
-                            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                        })
-                    elif review_length < low_threshold:
-                        anomalies.append({
-                            "event_id": event_id,
-                            "trace_id": trace_id,
-                            "event_type": event_type,
-                            "anomaly_type": "Too Short",
-                            "description": f"Review length {review_length} is below low threshold {low_threshold}",
-                            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                        })
-
-                if event_type == "rating_game":
-                    rating_value = msg["payload"]["rating"]
-                    if rating_value > high_threshold:
-                        anomalies.append({
-                            "event_id": event_id,
-                            "trace_id": trace_id,
-                            "event_type": event_type,
-                            "anomaly_type": "High Rating",
-                            "description": f"Rating {rating_value} exceeds high threshold {high_threshold}",
-                            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                        })
-                    elif rating_value < low_threshold:
-                        anomalies.append({
-                            "event_id": event_id,
-                            "trace_id": trace_id,
-                            "event_type": event_type,
-                            "anomaly_type": "Low Rating",
-                            "description": f"Rating {rating_value} is below low threshold {low_threshold}",
-                            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                        })
-
-                for anomaly in anomalies:
-                    store_anomaly(anomaly)
-                    logger.info(f"Anomaly detected: {anomaly}")
-
+        with open(DATA_STORE, 'r+') as f:
+            data = json.load(f)  # Load existing anomalies
+            data.append(anomaly)  # Append the new anomaly
+            f.seek(0)  # Reset file pointer to the beginning
+            json.dump(data, f, indent=4)  # Write updated anomalies
+        logger.info("Anomaly saved successfully.")
+    except FileNotFoundError:
+        # If the file doesn't exist, create it and save the anomaly
+        with open(DATA_STORE, 'w') as f:
+            json.dump([anomaly], f, indent=4)
+        logger.info("Anomaly file not found. Created a new file and saved anomaly.")
     except Exception as e:
-        logger.error(f"Error in anomaly detection: {e}")
-        return NoContent, 404
+        logger.error(f"Error saving anomaly: {str(e)}")
 
-# Retrieve anomalies
+def process_events_from_kafka():
+    """Fetch events from Kafka and process them."""
+    global kafka_consumer
+    try:
+        for msg in kafka_consumer:
+            if msg is not None:
+                event = json.loads(msg.value.decode('utf-8'))
+                process_event(event)
+    except Exception as e:
+        logger.error(f"Error fetching events from Kafka: {str(e)}")
+
+def process_event(event):
+    """Process a single event and detect anomalies."""
+    event_id = event.get("event_id")
+    anomaly_type = event.get("type")
+    payload = event.get("payload")
+    trace_id = event.get("trace_id")
+    logger.info(f"Processing event: {event}")
+
+    anomalies = []
+
+    if anomaly_type == "get_all_reviews":
+        review_length = len(payload.get("review", ""))
+        if review_length < get_all_reviews_thresholds["min"]:
+            anomalies.append({
+                "event_id": event_id,
+                "anomaly_type": anomaly_type,
+                "trace_id": trace_id,
+                "anomaly_type": "Too Short",
+                "description": f"Review length {review_length} is below the minimum threshold",
+                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            })
+        if review_length > get_all_reviews_thresholds["max"]:
+            anomalies.append({
+                "event_id": event_id,
+                "anomaly_type": anomaly_type,
+                "trace_id": trace_id,
+                "anomaly_type": "Too Long",
+                "description": f"Review length {review_length} is above the maximum threshold",
+                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            })
+
+    if anomaly_type == "rating_game":
+        rating_value = payload.get("rating", 0)
+        if rating_value < rating_game_thresholds["min"]:
+            anomalies.append({
+                "event_id": event_id,
+                "anomaly_type": anomaly_type,
+                "trace_id": trace_id,
+                "anomaly_type": "Low Rating",
+                "description": f"Rating {rating_value} is below the minimum threshold",
+                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            })
+        if rating_value > rating_game_thresholds["max"]:
+            anomalies.append({
+                "event_id": event_id,
+                "anomaly_type": anomaly_type,
+                "trace_id": trace_id,
+                "anomaly_type": "High Rating",
+                "description": f"Rating {rating_value} is above the maximum threshold",
+                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            })
+
+    for anomaly in anomalies:
+        save_anomaly(anomaly)
+        logger.info(f"Anomaly detected: {anomaly}")
+
+def init_scheduler():
+    sched = BackgroundScheduler(daemon=True)
+    sched.add_job(process_events_from_kafka, 'interval', seconds=app_config['scheduler']['period_sec'])
+    sched.start()
+
 def get_anomalies(anomaly_type=None):
-    logger.info("Request for retrieving anomalies started")
+    """Retrieve anomalies from the JSON file."""
+    logger.info("Request for anomalies received.")
 
-    valid_anomaly_types = ["Too Short", "Too Long", "Low Rating", "High Rating"]
+    valid_anomaly_types = ["Too_short", "Too_long", "Low_rating", "High_rating"]
     if anomaly_type and anomaly_type not in valid_anomaly_types:
-        logger.error("Invalid anomaly type requested")
+        logger.error(f"Invalid Anomaly Type requested: {anomaly_type}")
         return {"message": "Invalid anomaly type"}, 400
 
-    if os.path.isfile(json_path):
-        with open(json_path, 'r') as f:
+    if os.path.isfile(DATA_STORE):
+        with open(DATA_STORE, 'r') as f:
             data = json.load(f)
 
         if anomaly_type:
             data = [d for d in data if d["anomaly_type"] == anomaly_type]
 
         if not data:
-            logger.warning("No anomalies found")
+            logger.warning("No anomalies found.")
             return {"message": "No anomalies found"}, 404
 
-        logger.info("Anomalies retrieved successfully")
+        logger.debug(f"Returning anomalies: {data}")
+        logger.info("Anomalies retrieved successfully.")
         return data, 200
     else:
-        logger.warning("Anomaly data file not found")
+        logger.warning("Anomaly data file not found.")
         return {"message": "No anomalies found"}, 404
-
-# Initialize scheduler
-def init_scheduler():
-    sched = BackgroundScheduler(daemon=True)
-    sched.add_job(anomaly_detector, 'interval', seconds=app_config['scheduler']['period_sec'])
-    sched.start()
 
 # FlaskApp setup
 app = connexion.FlaskApp(__name__, specification_dir='.')
@@ -172,5 +189,6 @@ app.add_middleware(
 
 if __name__ == "__main__":
     make_json_file()
+    init_kafka_consumer()
     init_scheduler()
     app.run(port=8120, host="0.0.0.0")
