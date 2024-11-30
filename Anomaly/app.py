@@ -39,19 +39,19 @@ rating_game_thresholds = app_config["thresholds"]["rating_game"]
 DATA_STORE = app_config['datastore']['filepath']
 kafka_consumer = None
 
-def init_kafka_consumer():
-    """Initialize the Kafka consumer."""
-    global kafka_consumer
-    kafka_hostname = f"{app_config['events']['hostname']}:{app_config['events']['port']}"
-    client = KafkaClient(hosts=kafka_hostname)
-    topic = client.topics[str.encode(app_config["events"]["topic"])]
+# def init_kafka_consumer():
+#     """Initialize the Kafka consumer."""
+#     global kafka_consumer
+#     kafka_hostname = f"{app_config['events']['hostname']}:{app_config['events']['port']}"
+#     client = KafkaClient(hosts=kafka_hostname)
+#     topic = client.topics[str.encode(app_config["events"]["topic"])]
 
-    kafka_consumer = topic.get_simple_consumer(
-        reset_offset_on_start=False,
-        consumer_timeout_ms=1000,
-        auto_offset_reset=OffsetType.LATEST
-    )
-    logger.info("Kafka consumer initialized.")
+#     kafka_consumer = topic.get_simple_consumer(
+#         reset_offset_on_start=False,
+#         consumer_timeout_ms=1000,
+#         auto_offset_reset=OffsetType.LATEST
+#     )
+#     logger.info("Kafka consumer initialized.")
 
 def make_json_file():
     """Ensure the JSON anomaly file exists."""
@@ -76,76 +76,89 @@ def save_anomaly(anomaly):
     except Exception as e:
         logger.error(f"Error saving anomaly: {str(e)}")
 
-def process_events_from_kafka():
-    """Fetch events from Kafka and process them."""
-    global kafka_consumer
-    try:
-        for msg in kafka_consumer:
-            if msg is not None:
-                event = json.loads(msg.value.decode('utf-8'))
-                process_event(event)
-    except Exception as e:
-        logger.error(f"Error fetching events from Kafka: {str(e)}")
+# def process_events_from_kafka():
+#     """Fetch events from Kafka and process them."""
+#     global kafka_consumer
+#     try:
+#         for msg in kafka_consumer:
+#             if msg is not None:
+#                 event = json.loads(msg.value.decode('utf-8'))
+#                 process_event(event)
+#     except Exception as e:
+#         logger.error(f"Error fetching events from Kafka: {str(e)}")
 
 def process_event(event):
     """Process a single event and detect anomalies."""
-    event_id = event.get("event_id")
-    anomaly_type = event.get("type")
-    payload = event.get("payload")
-    trace_id = event.get("trace_id")
-    logger.info(f"Processing event: {event}")
+    make_json_file()
+    hostname = f"{app_config['events']['hostname']}:{app_config['events']['port']}"
+    client = KafkaClient(hosts=hostname)
+    topic = client.topics[str.encode(app_config["events"]["topic"])]
+    consumer = topic.get_simple_consumer(
+        reset_offset_on_start=False,
+        consumer_timeout_ms=1000,
+        auto_offset_reset=OffsetType.LATEST
+    )
+    for msg in consumer:
+        msg = msg.value.decode('utf-8')
+        msg = json.loads(msg)
 
-    anomalies = []
+        event_id = event.get("event_id")
+        event_type = msg['type']
+        payload = event.get("payload")
+        trace_id = event.get("trace_id")
+        logger.info(f"Processing event: {event}")
 
-    if anomaly_type == "get_all_reviews":
-        review_length = len(payload.get("review", ""))
-        if review_length < get_all_reviews_thresholds["min"]:
-            anomalies.append({
-                "event_id": event_id,
-                "anomaly_type": anomaly_type,
-                "trace_id": trace_id,
-                "anomaly_type": "Too Short",
-                "description": f"Review length {review_length} is below the minimum threshold",
-                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-            })
-        if review_length > get_all_reviews_thresholds["max"]:
-            anomalies.append({
-                "event_id": event_id,
-                "anomaly_type": anomaly_type,
-                "trace_id": trace_id,
-                "anomaly_type": "Too Long",
-                "description": f"Review length {review_length} is above the maximum threshold",
-                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-            })
+        anomalies = []
 
-    if anomaly_type == "rating_game":
-        rating_value = payload.get("rating", 0)
-        if rating_value < rating_game_thresholds["min"]:
-            anomalies.append({
-                "event_id": event_id,
-                "anomaly_type": anomaly_type,
-                "trace_id": trace_id,
-                "anomaly_type": "Low Rating",
-                "description": f"Rating {rating_value} is below the minimum threshold",
-                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-            })
-        if rating_value > rating_game_thresholds["max"]:
-            anomalies.append({
-                "event_id": event_id,
-                "anomaly_type": anomaly_type,
-                "trace_id": trace_id,
-                "anomaly_type": "High Rating",
-                "description": f"Rating {rating_value} is above the maximum threshold",
-                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-            })
+        if msg['type'] == 'get_all_reviews':
+            get_all_reviews = msg['payload']["get_all_reviews"]
+            if get_all_reviews < get_all_reviews_thresholds["min"]:
+                anomalies.append({
+                    "event_id": event_id,
+                    "event_type": event_type,
+                    "trace_id": trace_id,
+                    "anomaly_type": "Too Short",
+                    "description": f"Review length {get_all_reviews} is below the minimum threshold",
+                    "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                })
+            if get_all_reviews > get_all_reviews_thresholds["max"]:
+                anomalies.append({
+                    "event_id": event_id,
+                    "event_type": event_type,
+                    "trace_id": trace_id,
+                    "anomaly_type": "Too Long",
+                    "description": f"Review length {get_all_reviews} is above the maximum threshold",
+                    "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                })
 
-    for anomaly in anomalies:
-        save_anomaly(anomaly)
-        logger.info(f"Anomaly detected: {anomaly}")
+        if get_all_reviews == "rating_game":
+            rating_game = msg['payload']["rating_game"]
+            if rating_game < rating_game_thresholds["min"]:
+                anomalies.append({
+                    "event_id": event_id,
+                    "event_type": event_type,
+                    "trace_id": trace_id,
+                    "anomaly_type": "Low Rating",
+                    "description": f"Rating {rating_game} is below the minimum threshold",
+                    "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                })
+            if rating_game > rating_game_thresholds["max"]:
+                anomalies.append({
+                    "event_id": event_id,
+                    "event_type": event_type,
+                    "trace_id": trace_id,
+                    "anomaly_type": "High Rating",
+                    "description": f"Rating {rating_game} is above the maximum threshold",
+                    "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                })
+
+        for anomaly in anomalies:
+            save_anomaly(anomaly)
+            logger.info(f"Anomaly detected: {anomaly}")
 
 def init_scheduler():
     sched = BackgroundScheduler(daemon=True)
-    sched.add_job(process_events_from_kafka, 'interval', seconds=app_config['scheduler']['period_sec'])
+    sched.add_job(process_event, 'interval', seconds=app_config['scheduler']['period_sec'])
     sched.start()
 
 def get_anomalies(anomaly_type=None):
@@ -189,6 +202,6 @@ app.add_middleware(
 
 if __name__ == "__main__":
     make_json_file()
-    init_kafka_consumer()
+    # init_kafka_consumer()
     init_scheduler()
     app.run(port=8120, host="0.0.0.0")
