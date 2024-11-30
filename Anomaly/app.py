@@ -37,7 +37,7 @@ client = KafkaClient(hosts=hostname)
 topic = client.topics[str.encode(app_config["events"]["topic"])]
 
 # JSON data store
-DATA_STORE = "./3855-Lab8/Anomaly/anomalies.json"
+DATA_STORE = app_config['datastore']['filepath']
 
 def ensure_datastore():
     """Ensure the datastore file and folder exist."""

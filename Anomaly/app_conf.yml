@@ -12,4 +12,4 @@ events:
   port: 9092
 
 datastore:
-  filepath: ./anomalies.json
+  filepath: anomalies.json
