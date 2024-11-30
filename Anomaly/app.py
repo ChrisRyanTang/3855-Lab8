@@ -88,7 +88,7 @@ def save_anomaly(anomaly):
 #     except Exception as e:
 #         logger.error(f"Error fetching events from Kafka: {str(e)}")
 
-def process_event(event):
+def process_event():
     """Process a single event and detect anomalies."""
     make_json_file()
     hostname = f"{app_config['events']['hostname']}:{app_config['events']['port']}"
@@ -107,7 +107,6 @@ def process_event(event):
             event_id = str(uuid.uuid4())
             event_type = msg['type']
             trace_id = msg['payload']["trace_id"]
-            logger.info(f"Processing event: {event}")
 
             anomalies = []
 
