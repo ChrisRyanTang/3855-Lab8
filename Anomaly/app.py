@@ -108,7 +108,7 @@ def consume_kafka_events():
     except Exception as e:
         logger.error(f"Error consuming events: {str(e)}")
 
-def get_anomalies(anomaly_type=None):
+def get_anomalies(event_type=None):
     """Retrieve anomalies from the JSON file."""
     logger.info("Request for anomalies received.")
     try:
@@ -117,8 +117,8 @@ def get_anomalies(anomaly_type=None):
     except FileNotFoundError:
         anomalies = []
 
-    if anomaly_type:
-        anomalies = [a for a in anomalies if a['anomaly_type'] == anomaly_type]
+    if event_type:
+        anomalies = [a for a in anomalies if a['event_type'] == event_type]
 
     if not anomalies:
         logger.warning("No anomalies found.")
