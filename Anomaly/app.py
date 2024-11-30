@@ -49,19 +49,17 @@ def get_kafka_consumer():
     return consumer
 
 def save_anomaly(anomaly):
-    """Save detected anomaly to JSON data store."""
     try:
-        with open(DATA_STORE, 'r') as f:
-            data = json.load(f)
+        with open(app_config['datastore']['filename'], 'r') as f:
+            anomalies = json.load(f)
     except FileNotFoundError:
-        data = []
+        anomalies = []
 
-    data.append(anomaly)
+    anomalies.append(anomaly)
 
-    with open(DATA_STORE, 'w') as f:
-        json.dump(data, f, indent=4)
+    with open(app_config['datastore']['filename'], 'w') as f:
+        json.dump(anomalies, f, indent=4)
 
-    logger.info(f"Anomaly saved: {anomaly}")
 
 def process_event(event):
     """Process Kafka event for anomaly detection."""
