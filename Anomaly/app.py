@@ -32,13 +32,8 @@ with open(log_conf_file, 'r') as f:
 logger = logging.getLogger('basicLogger')
 
 # Kafka Configuration
-# kafka_hostname = f"{app_config['events']['hostname']}:{app_config['events']['port']}"
-# client = KafkaClient(hosts=kafka_hostname)
-# topic = client.topics[str.encode(app_config["events"]["topic"])]
 get_all_reviews_thresholds = app_config["thresholds"]["get_all_reviews"]
 rating_game_thresholds = app_config["thresholds"]["rating_game"]
-
-
 
 # JSON Data Store
 DATA_STORE = app_config['datastore']['filepath']
@@ -57,7 +52,6 @@ def init_kafka_consumer():
         auto_offset_reset=OffsetType.LATEST
     )
     logger.info("Kafka consumer initialized.")
-
 
 def make_json_file():
     """Ensure the JSON anomaly file exists."""
@@ -93,7 +87,6 @@ def process_events_from_kafka():
     except Exception as e:
         logger.error(f"Error fetching events from Kafka: {str(e)}")
 
-
 def process_event(event):
     """Process a single event and detect anomalies."""
     event_id = event.get("event_id")
@@ -105,8 +98,8 @@ def process_event(event):
     anomalies = []
 
     if event_type == "get_all_reviews":
-        review_length = payload.get("reviews", 0)
-        if review_length < app_config["thresholds"]["get_all_reviews"]["min"]:
+        review_length = len(payload.get("review", ""))
+        if review_length < get_all_reviews_thresholds["min"]:
             anomalies.append({
                 "event_id": event_id,
                 "event_type": event_type,
@@ -115,7 +108,7 @@ def process_event(event):
                 "description": f"Review length {review_length} is below the minimum threshold",
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
             })
-        if review_length > app_config["thresholds"]["get_all_reviews"]["max"]:
+        if review_length > get_all_reviews_thresholds["max"]:
             anomalies.append({
                 "event_id": event_id,
                 "event_type": event_type,
@@ -127,7 +120,7 @@ def process_event(event):
 
     if event_type == "rating_game":
         rating_value = payload.get("rating", 0)
-        if rating_value < app_config["thresholds"]["rating_game"]["min"]:
+        if rating_value < rating_game_thresholds["min"]:
             anomalies.append({
                 "event_id": event_id,
                 "event_type": event_type,
@@ -136,7 +129,7 @@ def process_event(event):
                 "description": f"Rating {rating_value} is below the minimum threshold",
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
             })
-        if rating_value > app_config["thresholds"]["rating_game"]["max"]:
+        if rating_value > rating_game_thresholds["max"]:
             anomalies.append({
                 "event_id": event_id,
                 "event_type": event_type,
@@ -150,36 +143,36 @@ def process_event(event):
         save_anomaly(anomaly)
         logger.info(f"Anomaly detected: {anomaly}")
 
-            
 def init_scheduler():
     sched = BackgroundScheduler(daemon=True)
     sched.add_job(process_events_from_kafka, 'interval', seconds=app_config['scheduler']['period_sec'])
     sched.start()
 
-
-
-def get_anomalies(event_type=None):
+def get_anomalies(anomaly_type=None):
     """Retrieve anomalies from the JSON file."""
     logger.info("Request for anomalies received.")
-    
-    valid_types = ["get_all_reviews", "rating_game"]
-    if event_type and event_type not in valid_types:
-        return {"message": "Invalid event type"}, 400
+
+    valid_anomaly_types = ["Too_short", "Too_long", "Low_rating", "High_rating"]
+    if anomaly_type and anomaly_type not in valid_anomaly_types:
+        logger.error("Invalid Anomaly Type requested")
+        return {"message": "Invalid anomaly type"}, 400
 
     if os.path.isfile(DATA_STORE):
         with open(DATA_STORE, 'r') as f:
             data = json.load(f)
-            
-        if event_type:
-            data = [d for d in data if d["event_type"] == event_type]
-        
+
+        if anomaly_type:
+            data = [d for d in data if d["anomaly_type"] == anomaly_type]
+
         if not data:
+            logger.warning("No anomalies found.")
             return {"message": "No anomalies found"}, 404
-        
+
         logger.debug(f"Returning anomalies: {data}")
-        logger.info(f"Anomalies retrieved successfully.")
+        logger.info("Anomalies retrieved successfully.")
         return data, 200
     else:
+        logger.warning("Anomaly data file not found.")
         return {"message": "No anomalies found"}, 404
 
 # FlaskApp setup
