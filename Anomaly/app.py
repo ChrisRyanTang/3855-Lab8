@@ -35,8 +35,8 @@ logger = logging.getLogger('basicLogger')
 # kafka_hostname = f"{app_config['events']['hostname']}:{app_config['events']['port']}"
 # client = KafkaClient(hosts=kafka_hostname)
 # topic = client.topics[str.encode(app_config["events"]["topic"])]
-high_threshold = app_config["thresholds"]["high"]
-low_threshold = app_config["thresholds"]["low"]
+high_threshold = app_config["thresholds"]["max"]
+low_threshold = app_config["thresholds"]["min"]
 
 
 # JSON Data Store
