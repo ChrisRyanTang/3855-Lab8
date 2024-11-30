@@ -164,7 +164,7 @@ def init_scheduler():
     sched.add_job(process_event, 'interval', seconds=app_config['scheduler']['period_sec'])
     sched.start()
 
-def get_anomalies(anomaly_type=None):
+def get_anomalies(anomaly_type=None, event_type=None):
     """Retrieve anomalies from the JSON file."""
     logger.info("Request for anomalies received.")
 
@@ -177,8 +177,13 @@ def get_anomalies(anomaly_type=None):
         with open(DATA_STORE, 'r') as f:
             data = json.load(f)
 
+        # Filter by anomaly_type if provided
         if anomaly_type:
             data = [d for d in data if d["anomaly_type"] == anomaly_type]
+        
+        # Filter by event_type if provided
+        if event_type:
+            data = [d for d in data if d["event_type"] == event_type]
 
         if not data:
             logger.warning("No anomalies found.")
@@ -190,6 +195,7 @@ def get_anomalies(anomaly_type=None):
     else:
         logger.warning("Anomaly data file not found.")
         return {"message": "No anomalies found"}, 404
+
 
 # FlaskApp setup
 app = connexion.FlaskApp(__name__, specification_dir='.')
