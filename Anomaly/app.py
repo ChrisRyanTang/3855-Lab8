@@ -2,6 +2,7 @@ import connexion
 import yaml
 import logging
 import logging.config
+from connexion import NoContent
 from connexion.middleware import MiddlewarePosition
 from starlette.middleware.cors import CORSMiddleware
 from pykafka import KafkaClient
@@ -9,8 +10,8 @@ from pykafka.common import OffsetType
 from apscheduler.schedulers.background import BackgroundScheduler
 import os
 import json
+import uuid
 from datetime import datetime
-from threading import Thread
 
 # Load configurations
 if "TARGET_ENV" in os.environ and os.environ["TARGET_ENV"] == "test":
@@ -87,8 +88,8 @@ def save_anomaly(anomaly):
 #     except Exception as e:
 #         logger.error(f"Error fetching events from Kafka: {str(e)}")
 
-def process_anomalies():
-    """Fetch events from Kafka, process them, and detect anomalies."""
+def process_event(event):
+    """Process a single event and detect anomalies."""
     make_json_file()
     hostname = f"{app_config['events']['hostname']}:{app_config['events']['port']}"
     client = KafkaClient(hosts=hostname)
@@ -98,40 +99,71 @@ def process_anomalies():
         consumer_timeout_ms=1000,
         auto_offset_reset=OffsetType.LATEST
     )
-    logger.info("Started consuming Kafka events.")
-
     try:
         for msg in consumer:
-            if msg is not None:
-                msg = json.loads(msg.value.decode('utf-8'))
-                anomalies = []
-                # Process events here similar to anomaly_detector
-                # Example for get_all_reviews
-                if msg['type'] == 'get_all_reviews':
-                    review_length = len(msg["payload"].get("review", ""))
-                    if review_length < get_all_reviews_thresholds["min"]:
-                        anomalies.append({
-                            "event_id": msg.get("event_id"),
-                            "event_type": msg["type"],
-                            "trace_id": msg["payload"].get("trace_id"),
-                            "anomaly_type": "Too Short",
-                            "description": f"Review length {review_length} is below the minimum threshold",
-                            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                        })
-                # Save anomalies
-                for anomaly in anomalies:
-                    save_anomaly(anomaly)
-                    logger.info(f"Anomaly detected: {anomaly}")
+            msg = msg.value.decode('utf-8')
+            msg = json.loads(msg)
+
+            event_id = str(uuid.uuid4())
+            event_type = msg['type']
+            trace_id = msg['payload']["trace_id"]
+            logger.info(f"Processing event: {event}")
+
+            anomalies = []
+
+            if msg['type'] == 'get_all_reviews':
+                get_all_reviews = msg['payload']["get_all_reviews"]
+                if get_all_reviews < get_all_reviews_thresholds["min"]:
+                    anomalies.append({
+                        "event_id": event_id,
+                        "event_type": event_type,
+                        "trace_id": trace_id,
+                        "anomaly_type": "Too Short",
+                        "description": f"Review length {get_all_reviews} is below the minimum threshold",
+                        "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                    })
+                if get_all_reviews > get_all_reviews_thresholds["max"]:
+                    anomalies.append({
+                        "event_id": event_id,
+                        "event_type": event_type,
+                        "trace_id": trace_id,
+                        "anomaly_type": "Too Long",
+                        "description": f"Review length {get_all_reviews} is above the maximum threshold",
+                        "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                    })
+
+            if get_all_reviews == "rating_game":
+                rating_game = msg['payload']["rating_game"]
+                if rating_game < rating_game_thresholds["min"]:
+                    anomalies.append({
+                        "event_id": event_id,
+                        "event_type": event_type,
+                        "trace_id": trace_id,
+                        "anomaly_type": "Low Rating",
+                        "description": f"Rating {rating_game} is below the minimum threshold",
+                        "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                    })
+                if rating_game > rating_game_thresholds["max"]:
+                    anomalies.append({
+                        "event_id": event_id,
+                        "event_type": event_type,
+                        "trace_id": trace_id,
+                        "anomaly_type": "High Rating",
+                        "description": f"Rating {rating_game} is above the maximum threshold",
+                        "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                    })
+
+            for anomaly in anomalies:
+                save_anomaly(anomaly)
+                logger.info(f"Anomaly detected: {anomaly}")
     except Exception as e:
-        logger.error(f"Error in processing anomalies: {e}")
+        logger.error(f"Error processing event: {str(e)}")
+        return NoContent, 404
 
 def init_scheduler():
-    """Initialize the scheduler to process anomalies periodically."""
     sched = BackgroundScheduler(daemon=True)
-    sched.add_job(process_anomalies, 'interval', seconds=app_config['scheduler']['period_sec'])
+    sched.add_job(process_event, 'interval', seconds=app_config['scheduler']['period_sec'])
     sched.start()
-    logger.info("Scheduler initialized.")
-
 
 def get_anomalies(anomaly_type=None):
     """Retrieve anomalies from the JSON file."""
