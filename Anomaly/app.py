@@ -65,6 +65,7 @@ def save_anomaly(anomaly):
 
 def process_event(event):
     """Process Kafka event for anomaly detection."""
+    event_id = event.get("event_id")
     event_type = event.get("type")
     payload = event.get("payload")
     trace_id = event.get("trace_id")
@@ -75,6 +76,7 @@ def process_event(event):
         review_length = len(payload.get("review", ""))
         if review_length < app_config["thresholds"]["review_length"]["min"]:
             anomaly = {
+                "event_id": event_id,
                 "event_type": event_type,
                 "trace_id": trace_id,
                 "anomaly_type": "Too Short",
@@ -89,6 +91,7 @@ def process_event(event):
         rating_value = payload.get("rating")
         if rating_value < app_config["thresholds"]["rating"]["min"]:
             anomaly = {
+                "event_id": event_id,
                 "event_type": event_type,
                 "trace_id": trace_id,
                 "anomaly_type": "Low Rating",
@@ -114,7 +117,7 @@ def consume_kafka_events():
         logger.error(f"Error consuming events: {str(e)}")
 
 # REST API endpoints
-def get_anomalies(event_type):
+def get_anomalies(anomaly_type):
     """Retrieve anomalies by type."""
     try:
         with open(DATA_STORE, 'r') as f:
@@ -122,7 +125,7 @@ def get_anomalies(event_type):
     except FileNotFoundError:
         anomalies = []
 
-    filtered_anomalies = [a for a in anomalies if a['event_type'] == event_type]
+    filtered_anomalies = [a for a in anomalies if a['anomaly_type'] == anomaly_type]
     return filtered_anomalies, 200
 
 # Set up FlaskApp and routes
