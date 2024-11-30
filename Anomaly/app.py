@@ -39,24 +39,6 @@ topic = client.topics[str.encode(app_config["events"]["topic"])]
 # JSON data store
 DATA_STORE = app_config['datastore']['filepath']
 
-def ensure_datastore():
-    """Ensure the datastore file and folder exist."""
-    # Get the folder path from the file path
-    folder_path = os.path.dirname(DATA_STORE)
-
-    if not os.path.exists(folder_path):
-        logging.error(f"Folder '{folder_path}' does not exist. Please check your directory structure.")
-        raise FileNotFoundError(f"Folder '{folder_path}' not found.")
-    
-    # Create the anomalies.json file if it doesn't exist
-    if not os.path.exists(DATA_STORE):
-        with open(DATA_STORE, 'w') as f:
-            json.dump([], f, indent=4)  # Initialize with an empty list
-        logger.info(f"Created file: {DATA_STORE}")
-
-# Call this function at the start of your app
-ensure_datastore()
-
 def get_kafka_consumer():
     """Initialize Kafka consumer."""
     consumer = topic.get_simple_consumer(
@@ -109,7 +91,6 @@ def process_event(event):
         rating_value = payload.get("rating")
         if rating_value < app_config["thresholds"]["rating"]["min"]:
             anomaly = {
-                "event_id": event_id,
                 "event_type": event_type,
                 "trace_id": trace_id,
                 "anomaly_type": "Low Rating",
