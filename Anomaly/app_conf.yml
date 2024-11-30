@@ -1,4 +1,8 @@
 thresholds:
+  get_all_reviews:
+    max: 100
+    min: 10
+  rating_game:
     max: 100
     min: 10
 events:
@@ -8,4 +12,4 @@ events:
 datastore:
   filepath: anomalies.json
 scheduler:
-  period_sec: 10 
+  period_sec: 10

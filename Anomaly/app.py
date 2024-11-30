@@ -35,8 +35,9 @@ logger = logging.getLogger('basicLogger')
 # kafka_hostname = f"{app_config['events']['hostname']}:{app_config['events']['port']}"
 # client = KafkaClient(hosts=kafka_hostname)
 # topic = client.topics[str.encode(app_config["events"]["topic"])]
-high_threshold = app_config["thresholds"]["max"]
-low_threshold = app_config["thresholds"]["min"]
+get_all_reviews_thresholds = app_config["thresholds"]["get_all_reviews"]
+rating_game_thresholds = app_config["thresholds"]["rating_game"]
+
 
 
 # JSON Data Store
@@ -82,51 +83,48 @@ def process_event(event):
             
 
         if event_type == "get_all_reviews":
-            get_all_reviews = payload.get("reviews")
-            if get_all_reviews < low_threshold:
-                anomaly.append = ({
+            review_length = payload.get("reviews", 0)
+            if review_length < get_all_reviews_thresholds["min"]:
+                anomaly.append({
                     "event_id": event_id,
                     "event_type": event_type,
                     "trace_id": trace_id,
                     "anomaly_type": "Too Short",
-                    "description": f"Review length {get_all_reviews} is below the minimum threshold",
+                    "description": f"Review length {review_length} is below the minimum threshold",
                     "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
                 })
-            if event_type == "get_all_reviews":
-                get_all_reviews = payload.get("reviews")
-                if get_all_reviews > high_threshold:
-                    anomaly.append = ({
-                        "event_id": event_id,
-                        "event_type": event_type,
-                        "trace_id": trace_id,
-                        "anomaly_type": "Too Long",
-                        "description": f"Review length {get_all_reviews} is above the maximum threshold",
-                        "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                    })
+            if review_length > get_all_reviews_thresholds["max"]:
+                anomaly.append({
+                    "event_id": event_id,
+                    "event_type": event_type,
+                    "trace_id": trace_id,
+                    "anomaly_type": "Too Long",
+                    "description": f"Review length {review_length} is above the maximum threshold",
+                    "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                })
 
         if event_type == "rating_game":
-            rating_game = payload.get("rating")
-            if rating_game < low_threshold:
-                anomaly.append = ({
+            rating_value = payload.get("rating", 0)
+            if rating_value < rating_game_thresholds["min"]:
+                anomaly.append({
                     "event_id": event_id,
                     "event_type": event_type,
                     "trace_id": trace_id,
                     "anomaly_type": "Low Rating",
-                    "description": f"Rating {rating_game} is below the minimum threshold",
+                    "description": f"Rating {rating_value} is below the minimum threshold",
                     "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
                 })
-            if event_type == "rating_game":
-                rating_game = payload.get("rating")
-                if rating_game > high_threshold:
-                    anomaly.append = ({
-                        "event_id": event_id,
-                        "event_type": event_type,
-                        "trace_id": trace_id,
-                        "anomaly_type": "High Rating",
-                        "description": f"Rating {rating_game} is above the maximum threshold",
-                        "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                    })
-            
+            if rating_value > rating_game_thresholds["max"]:
+                anomaly.append({
+                    "event_id": event_id,
+                    "event_type": event_type,
+                    "trace_id": trace_id,
+                    "anomaly_type": "High Rating",
+                    "description": f"Rating {rating_value} is above the maximum threshold",
+                    "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                })
+
+                    
             for a in anomaly:
                 save_anomaly(a)
                 logger.info(f"Anomaly detected: {a}")
