@@ -64,41 +64,42 @@ def save_anomaly(anomaly):
     logger.info(f"Anomaly saved: {anomaly}")
 
 def process_event(event):
-    """Process incoming Kafka event and detect anomalies."""
-    event_type = event.get('type')
-    payload = event.get('payload')
-    trace_id = event.get('trace_id')
-
+    """Process Kafka event for anomaly detection."""
+    event_type = event.get("type")
+    payload = event.get("payload")
+    trace_id = event.get("trace_id")
     logger.info(f"Received event: {event}")
 
-    thresholds = app_config['thresholds'].get(event_type)
-    if not thresholds:
-        logger.warning(f"No thresholds configured for event type: {event_type}")
-        return
+    if event_type == "get_all_reviews":
+        # Example anomaly check for review events
+        review_length = len(payload.get("review", ""))
+        if review_length < app_config["thresholds"]["review_length"]["min"]:
+            anomaly = {
+                "event_type": event_type,
+                "trace_id": trace_id,
+                "anomaly_type": "Too Short",
+                "description": f"Review length {review_length} is below the minimum threshold",
+                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            }
+            logger.info(f"Anomaly detected: {anomaly}")
+            save_anomaly(anomaly)
 
-    value = payload.get('value')
-    anomaly = None
+    elif event_type == "rating_game":
+        # Example anomaly check for game ratings
+        rating_value = payload.get("rating")
+        if rating_value < app_config["thresholds"]["rating"]["min"]:
+            anomaly = {
+                "event_type": event_type,
+                "trace_id": trace_id,
+                "anomaly_type": "Low Rating",
+                "description": f"Rating {rating_value} is below the minimum threshold",
+                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            }
+            logger.info(f"Anomaly detected: {anomaly}")
+            save_anomaly(anomaly)
 
-    if value > thresholds['max']:
-        anomaly = {
-            "event_type": event_type,
-            "trace_id": trace_id,
-            "anomaly_type": "Too High",
-            "description": f"Value {value} exceeds max threshold {thresholds['max']}",
-            "timestamp": datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        }
-    elif value < thresholds['min']:
-        anomaly = {
-            "event_type": event_type,
-            "trace_id": trace_id,
-            "anomaly_type": "Too Low",
-            "description": f"Value {value} below min threshold {thresholds['min']}",
-            "timestamp": datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        }
-
-    if anomaly:
-        logger.info(f"Anomaly detected: {anomaly}")
-        save_anomaly(anomaly)
+    else:
+        logger.warning(f"Unhandled event type: {event_type}")
 
 def consume_kafka_events():
     """Background thread to consume Kafka events."""
