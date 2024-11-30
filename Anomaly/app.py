@@ -50,15 +50,23 @@ def get_kafka_consumer():
 
 def save_anomaly(anomaly):
     try:
+        logger.debug(f"Attempting to read file: {app_config['datastore']['filename']}")
         with open(app_config['datastore']['filename'], 'r') as f:
             anomalies = json.load(f)
     except FileNotFoundError:
+        logger.warning("Datastore file not found. Initializing a new list.")
         anomalies = []
 
     anomalies.append(anomaly)
 
-    with open(app_config['datastore']['filename'], 'w') as f:
-        json.dump(anomalies, f, indent=4)
+    try:
+        logger.debug(f"Attempting to write to file: {app_config['datastore']['filename']}")
+        with open(app_config['datastore']['filename'], 'w') as f:
+            json.dump(anomalies, f, indent=4)
+        logger.info("Successfully saved anomaly.")
+    except Exception as e:
+        logger.error(f"Failed to write to file: {str(e)}")
+
 
 
 def process_event(event):
