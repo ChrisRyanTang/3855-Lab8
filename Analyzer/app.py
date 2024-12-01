@@ -1,16 +1,14 @@
 import connexion
-import yaml
-import logging
-import logging.config
-from connexion import NoContent
-from pykafka import KafkaClient
-from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime
 import json
+import yaml
+import logging.config
 import os
-import uuid
+from connexion.middleware import MiddlewarePosition
+from starlette.middleware.cors import CORSMiddleware
+from pykafka import KafkaClient
+from pykafka.common import OffsetType
 
-# Load configurations
+
 if "TARGET_ENV" in os.environ and os.environ["TARGET_ENV"] == "test":
     print("In Test Environment")
     app_conf_file = "/config/app_conf.yml"
@@ -20,137 +18,103 @@ else:
     app_conf_file = "app_conf.yml"
     log_conf_file = "log_conf.yml"
 
+# Load application configuration
 with open(app_conf_file, 'r') as f:
     app_config = yaml.safe_load(f.read())
 
+# Load logging configuration
 with open(log_conf_file, 'r') as f:
     log_config = yaml.safe_load(f.read())
     logging.config.dictConfig(log_config)
 
+# Set up logger
 logger = logging.getLogger('basicLogger')
+logger.info("App Conf File: %s", app_conf_file)
+logger.info("Log Conf File: %s", log_conf_file)
+hostname = f"{app_config['events']['hostname']}:{app_config['events']['port']}"
 
-# Constants
-DATA_STORE = app_config['datastore']['filepath']
-KAFKA_HOSTNAME = app_config['events']['hostname']
-KAFKA_PORT = app_config['events']['port']
-KAFKA_TOPIC = app_config['events']['topic']
+# Kafka setup
+client = KafkaClient(hosts=hostname)
+topic = client.topics[str.encode(app_config["events"]["topic"])]
 
-# Initialize JSON datastore
-def initialize_json_file():
-    if not os.path.exists(DATA_STORE):
-        logger.info(f"Initializing datastore at {DATA_STORE}")
-        with open(DATA_STORE, 'w') as f:
-            json.dump([], f, indent=4)
 
-# Save an anomaly to JSON datastore
-def save_anomaly(anomaly):
-    with open(DATA_STORE, 'r+') as f:
-        data = json.load(f)
-        data.append(anomaly)
-        f.seek(0)
-        json.dump(data, f, indent=4)
-    logger.info(f"Anomaly saved: {anomaly}")
+def get_kafka_consumer():
+    client = KafkaClient(hosts=f"{app_config['events']['hostname']}:{app_config['events']['port']}")
+    topic = client.topics[str.encode(app_config['events']['topic'])]
+    consumer = topic.get_simple_consumer(
+        reset_offset_on_start=False,
+        consumer_timeout_ms=1000,
+        auto_offset_reset=OffsetType.LATEST
+    )
+    return consumer
 
-# Process Kafka events and detect anomalies
-def process_events():
-    logger.info("Processing Kafka events for anomalies...")
-    hostname = f"{KAFKA_HOSTNAME}:{KAFKA_PORT}"
-    client = KafkaClient(hosts=hostname)
-    topic = client.topics[KAFKA_TOPIC.encode('utf-8')]
-    consumer = topic.get_simple_consumer(consumer_timeout_ms=1000)
+
+
+def get_all_reviews_readings(index):
+    consumer = topic.get_simple_consumer(reset_offset_on_start=True, consumer_timeout_ms=1000)
+    count = 0
 
     try:
         for msg in consumer:
-            if msg is None:
-                logger.info("No new messages")
-                break
-
-            event = json.loads(msg.value.decode('utf-8'))
-            logger.debug(f"Received event: {event}")
-
-            event_type = event['type']
-            trace_id = event['payload']['trace_id']
-            anomalies = []
-
-            # Detect anomalies for get_all_reviews
-            if event_type == 'get_all_reviews':
-                value = event['payload']['get_all_reviews']
-                if value < app_config['thresholds']['get_all_reviews']['min']:
-                    anomalies.append({
-                        "event_id": str(uuid.uuid4()),
-                        "event_type": event_type,
-                        "trace_id": trace_id,
-                        "anomaly_type": "Too Low",
-                        "description": f"Value {value} is below the minimum threshold",
-                        "timestamp": datetime.now().isoformat()
-                    })
-                if value > app_config['thresholds']['get_all_reviews']['max']:
-                    anomalies.append({
-                        "event_id": str(uuid.uuid4()),
-                        "event_type": event_type,
-                        "trace_id": trace_id,
-                        "anomaly_type": "Too High",
-                        "description": f"Value {value} is above the maximum threshold",
-                        "timestamp": datetime.now().isoformat()
-                    })
-
-            # Detect anomalies for rating_game
-            if event_type == 'rating_game':
-                value = event['payload']['rating_game']
-                if value < app_config['thresholds']['rating_game']['min']:
-                    anomalies.append({
-                        "event_id": str(uuid.uuid4()),
-                        "event_type": event_type,
-                        "trace_id": trace_id,
-                        "anomaly_type": "Low Rating",
-                        "description": f"Value {value} is below the minimum threshold",
-                        "timestamp": datetime.now().isoformat()
-                    })
-                if value > app_config['thresholds']['rating_game']['max']:
-                    anomalies.append({
-                        "event_id": str(uuid.uuid4()),
-                        "event_type": event_type,
-                        "trace_id": trace_id,
-                        "anomaly_type": "High Rating",
-                        "description": f"Value {value} is above the maximum threshold",
-                        "timestamp": datetime.now().isoformat()
-                    })
-
-            # Save all detected anomalies
-            for anomaly in anomalies:
-                save_anomaly(anomaly)
-
+            msg_str = msg.value.decode('utf-8')
+            event = json.loads(msg_str)
+            if event['type'] == 'get_all_reviews':
+                if count == index:
+                    logger.info(f"Returning get_all_reviews at index {index}")
+                    return event['payload'], 200
+                count += 1
     except Exception as e:
-        logger.error(f"Error processing events: {str(e)}")
+        logger.error(f"Error retrieving get_all_reviews at index {index}: {str(e)}")
+    return {"message": "Not Found"}, 404
 
-# Retrieve anomalies via REST API
-def get_anomalies(anomaly_type=None, event_type=None):
-    logger.info("Request for anomalies received")
-    with open(DATA_STORE, 'r') as f:
-        data = json.load(f)
+def rating_game_readings(index):
+    consumer = topic.get_simple_consumer(reset_offset_on_start=True, consumer_timeout_ms=1000)
+    count = 0
+    try:
+        for msg in consumer:
+            msg_str = msg.value.decode('utf-8')
+            event = json.loads(msg_str)
+            if event['type'] == 'rating_game':
+                if count == index:
+                    logger.info(f"Returning rating_game at index {index}")
+                    return event['payload'], 200
+                count += 1
+    except Exception as e:
+        logger.error(f"Error retrieving rating_game at index {index}: {str(e)}")
+        return {"message": "Not Found"}, 404
 
-    if anomaly_type:
-        data = [anomaly for anomaly in data if anomaly["anomaly_type"] == anomaly_type]
-    if event_type:
-        data = [anomaly for anomaly in data if anomaly["event_type"] == event_type]
 
-    if not data:
-        return {"message": "No anomalies found"}, 404
+def get_event_stats():
+    consumer = topic.get_simple_consumer(reset_offset_on_start=True, consumer_timeout_ms=1000)
+    num_reviews, num_ratings = 0, 0
+    try:
+        for msg in consumer:
+            msg_str = msg.value.decode('utf-8')
+            event = json.loads(msg_str)
+            if event['type'] == 'get_all_reviews':
+                num_reviews += 1
+            elif event['type'] == 'rating_game':
+                num_ratings += 1
+    except Exception as e:
+        logger.error(f"Error retrieving event stats: {str(e)}")
+        return {"message": "Error retrieving event stats"}, 404
+    return {"num_reviews": num_reviews, "num_ratings": num_ratings}, 201
 
-    return data, 200
 
-# Scheduler setup
-def init_scheduler():
-    sched = BackgroundScheduler(daemon=True)
-    sched.add_job(process_events, 'interval', seconds=app_config['scheduler']['period_sec'])
-    sched.start()
-    logger.info("Scheduler initialized")
-
-# Application setup
 app = connexion.FlaskApp(__name__, specification_dir='.')
-app.add_api("openapi.yaml", strict_validation=True, validate_responses=True)
+app.add_api('openapi.yaml')
+app.add_middleware(
+    CORSMiddleware,
+    position=MiddlewarePosition.BEFORE_EXCEPTION,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-if __name__ == "__main__":
-    initialize_json_file()
-    init_scheduler()
-    app.run(port=8120, host="0.0.0.0")
+
+
+if __name__ == '__main__':
+    app.run(port=8110, host='0.0.0.0')
+
+
