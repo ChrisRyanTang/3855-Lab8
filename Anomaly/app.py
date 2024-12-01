@@ -145,15 +145,15 @@ def get_anomalies(anomaly_type=None, event_type=None):
     logger.info("Request for anomalies received.")
 
     valid_anomaly_types = ["TooHigh", "TooLow", "Too Short", "Too Long", "Low Rating", "High Rating"]
-    valid_event_types = ["get_all_reviews", "rating_game"]
+    # valid_event_types = ["get_all_reviews", "rating_game"]
 
     if anomaly_type and anomaly_type not in valid_anomaly_types:
         logger.error(f"Invalid Anomaly Type requested: {anomaly_type}")
         return {"message": "Invalid anomaly type"}, 400
     
-    if event_type and event_type not in valid_event_types:
-        logger.error(f"Invalid Event Type requested: {event_type}")
-        return {"message": "Invalid event type"}, 400
+    # if event_type and event_type not in valid_event_types:
+    #     logger.error(f"Invalid Event Type requested: {event_type}")
+    #     return {"message": "Invalid event type"}, 400
 
     if os.path.isfile(DATA_STORE):
         with open(DATA_STORE, 'r') as f:
