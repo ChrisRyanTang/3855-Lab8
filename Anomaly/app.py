@@ -147,11 +147,13 @@ def process_event():
         return NoContent, 404
 
 
-def get_anomalies(anomaly_type=None):
+def get_anomalies(anomaly_type=None, event_type=None):
     """Retrieve anomalies from the JSON file."""
     logger.info("Request for anomalies received.")
 
     valid_anomaly_types = ["TooHigh", "TooLow", "Too Short", "Too Long", "Low Rating", "High Rating"]
+    valid_event_types = ["get_all_reviews", "rating_game"]
+
     if anomaly_type and anomaly_type not in valid_anomaly_types:
         logger.error(f"Invalid Anomaly Type requested: {anomaly_type}")
         return {"message": "Invalid anomaly type"}, 400
@@ -166,8 +168,9 @@ def get_anomalies(anomaly_type=None):
             logger.debug(f"Returning anomalies of type {anomaly_type}: {data}")
         
         # Filter by event_type if provided
-        # if event_type:
-        #     data = [d for d in data if d["event_type"] == event_type]
+        if event_type:
+            data = [anomaly for anomaly in data if anomaly["event_type"] == event_type]
+
 
         if not data:
             logger.warning("No anomalies found.")
