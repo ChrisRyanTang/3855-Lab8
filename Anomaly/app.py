@@ -86,7 +86,7 @@ def process_events():
                 break
 
             # Log the raw Kafka message
-            logger.debug(f"Raw Kafka message: {msg.value.decode('utf-8')}")
+            # logger.debug(f"Raw Kafka message: {msg.value.decode('utf-8')}")
 
             event = json.loads(msg.value.decode('utf-8'))
             logger.info(f"Processing event: {event}")
