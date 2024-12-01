@@ -91,6 +91,7 @@ def process_events():
             event = json.loads(msg.value.decode('utf-8'))
             logger.info(f"Processing event: {event}")
 
+            steam_id = event['payload'].get('steam_id')
             event_type = event['type']
             trace_id = event['payload']['trace_id']
             anomalies = []
@@ -101,7 +102,7 @@ def process_events():
                 logger.debug(f"Review length: {review_length}")
                 if review_length < app_config['thresholds']['get_all_reviews']['min']:
                     anomalies.append({
-                        "event_id": str(uuid.uuid4()),
+                        "event_id": steam_id,
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Short",
@@ -110,7 +111,7 @@ def process_events():
                     })
                 if review_length > app_config['thresholds']['get_all_reviews']['max']:
                     anomalies.append({
-                        "event_id": str(uuid.uuid4()),
+                        "event_id": steam_id,
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Long",
@@ -124,7 +125,7 @@ def process_events():
                 valid_ratings = ["thumbs up", "thumbs down"]
                 if rating not in valid_ratings:
                     anomalies.append({
-                        "event_id": str(uuid.uuid4()),
+                        "event_id": steam_id,
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Invalid Rating",
