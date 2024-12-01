@@ -19,12 +19,6 @@ paths:
           schema:
             type: string
             example: TooHigh
-        # - name: event_type
-        #   in: query
-        #   description: The type of event to filter anomalies
-        #   schema:
-        #     type: string
-        #     example: get_all_reviews
       responses:
         '200':
           description: Successfully returned a list of anomalies of the given type

@@ -160,6 +160,7 @@ def get_anomalies(anomaly_type=None):
         # Filter by anomaly_type if provided
         if anomaly_type:
             data = [anomaly for anomaly in data if anomaly["anomaly_type"] == anomaly_type]
+            logger.debug(f"Returning anomalies of type {anomaly_type}: {data}")
         
         # Filter by event_type if provided
         # if event_type:
