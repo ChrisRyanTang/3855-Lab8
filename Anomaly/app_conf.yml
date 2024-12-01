@@ -1,7 +1,7 @@
 thresholds:
   get_all_reviews:
-    max: 4
-    min: 1
+    max: 50
+    min: 5
   rating_game:
     valid_ratings: ["thumbs up", "thumbs down"]
 events:

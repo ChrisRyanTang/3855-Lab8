@@ -79,6 +79,9 @@ def process_events():
     topic = client.topics[kafka_topic.encode('utf-8')]
     consumer = topic.get_simple_consumer(consumer_timeout_ms=1000)
 
+    # Dictionary to track review counts by game_id
+    review_counts = {}
+
     try:
         for msg in consumer:
             if msg is None:
@@ -86,50 +89,70 @@ def process_events():
                 break
 
             # Log the raw Kafka message
-            # logger.debug(f"Raw Kafka message: {msg.value.decode('utf-8')}")
+            logger.debug(f"Raw Kafka message: {msg.value.decode('utf-8')}")
 
+            # Parse the Kafka message
             event = json.loads(msg.value.decode('utf-8'))
             logger.info(f"Processing event: {event}")
 
-            steam_id = event['payload'].get('steam_id')
-            event_type = event['type']
-            trace_id = event['payload']['trace_id']
+            event_type = event.get('type')
+            if event_type not in ['get_all_reviews', 'rating_game']:
+                logger.warning(f"Unexpected event type: {event_type}")
+                continue
+
+            # Extract fields
+            game_id = event['payload'].get('game_id', "Unknown")
+            trace_id = event['payload'].get('trace_id', "Unknown")
             anomalies = []
 
-            # Detect anomalies for get_all_reviews (based on review length)
+            # Process 'get_all_reviews' events
             if event_type == 'get_all_reviews':
-                review_length = len(event['payload']['review'])
-                logger.debug(f"Review length: {review_length}")
-                if review_length < app_config['thresholds']['get_all_reviews']['min']:
+                # Update review count for the game_id
+                if game_id not in review_counts:
+                    review_counts[game_id] = 0
+                review_counts[game_id] += 1
+                logger.debug(f"Updated review count for game_id {game_id}: {review_counts[game_id]}")
+
+                # Check thresholds for the number of reviews
+                num_reviews = review_counts[game_id]
+                if num_reviews < app_config['thresholds']['get_all_reviews']['min']:
                     anomalies.append({
-                        "event_id": steam_id,
+                        "event_id": game_id,  # Use game_id as the event_id
                         "event_type": event_type,
                         "trace_id": trace_id,
-                        "anomaly_type": "Too Short",
-                        "description": f"Review length {review_length} is below the minimum threshold",
+                        "anomaly_type": "Too Few Reviews",
+                        "description": f"Number of reviews {num_reviews} is below the minimum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
-                if review_length > app_config['thresholds']['get_all_reviews']['max']:
+                if num_reviews > app_config['thresholds']['get_all_reviews']['max']:
                     anomalies.append({
-                        "event_id": steam_id,
+                        "event_id": game_id,  # Use game_id as the event_id
                         "event_type": event_type,
                         "trace_id": trace_id,
-                        "anomaly_type": "Too Long",
-                        "description": f"Review length {review_length} is above the maximum threshold",
+                        "anomaly_type": "Too Many Reviews",
+                        "description": f"Number of reviews {num_reviews} is above the maximum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
 
-            # Detect anomalies for rating_game (based on rating type)
+            # Process 'rating_game' events (unchanged)
             if event_type == 'rating_game':
-                rating = event['payload']['rating']
-                valid_ratings = ["thumbs up", "thumbs down"]
-                if rating not in valid_ratings:
+                num_reviews = event['payload'].get('num_reviews', 0)
+                if num_reviews < app_config['thresholds']['rating_game']['min']:
                     anomalies.append({
-                        "event_id": steam_id,
+                        "event_id": str(event['payload'].get('game_id', "Unknown")),
                         "event_type": event_type,
                         "trace_id": trace_id,
-                        "anomaly_type": "Invalid Rating",
-                        "description": f"Rating '{rating}' is not a valid value",
+                        "anomaly_type": "Too Few Reviews",
+                        "description": f"Number of reviews {num_reviews} is below the minimum threshold",
+                        "timestamp": datetime.now().isoformat()
+                    })
+                if num_reviews > app_config['thresholds']['rating_game']['max']:
+                    anomalies.append({
+                        "event_id": str(event['payload'].get('game_id', "Unknown")),
+                        "event_type": event_type,
+                        "trace_id": trace_id,
+                        "anomaly_type": "Too Many Reviews",
+                        "description": f"Number of reviews {num_reviews} is above the maximum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
 
@@ -139,6 +162,7 @@ def process_events():
 
     except Exception as e:
         logger.error(f"Error processing events: {str(e)}")
+
 
 
 def get_anomalies(anomaly_type=None, event_type=None):
