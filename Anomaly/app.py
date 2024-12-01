@@ -13,20 +13,20 @@ import json
 import uuid
 from datetime import datetime
 
-# # Load configurations
-# if "TARGET_ENV" in os.environ and os.environ["TARGET_ENV"] == "test":
-#     print("In Test Environment")
-#     app_conf_file = "/config/app_conf.yml"
-#     log_conf_file = "/config/log_conf.yml"
-# else:
-#     print("In Dev Environment")
-#     app_conf_file = "app_conf.yml"
-#     log_conf_file = "log_conf.yml"
+# Load configurations
+if "TARGET_ENV" in os.environ and os.environ["TARGET_ENV"] == "test":
+    print("In Test Environment")
+    app_conf_file = "/config/app_conf.yml"
+    log_conf_file = "/config/log_conf.yml"
+else:
+    print("In Dev Environment")
+    app_conf_file = "app_conf.yml"
+    log_conf_file = "log_conf.yml"
 
-with open('app_conf.yml', 'r') as f:
+with open(app_conf_file, 'r') as f:
     app_config = yaml.safe_load(f.read())
 
-with open('log_conf.yml', 'r') as f:
+with open(log_conf_file, 'r') as f:
     log_config = yaml.safe_load(f.read())
     logging.config.dictConfig(log_config)
 
@@ -45,17 +45,21 @@ DATA_STORE = app_config['datastore']['filepath']
 def make_json_file():
     """Ensure the JSON anomaly file exists."""
     if not os.path.isfile(DATA_STORE):
-        anomaly_data = []
+        logger.info(f'Initialized datastore: {DATA_STORE}')
         with open(DATA_STORE, 'w') as f:
-            json.dump(anomaly_data, f, indent=4)
+            json.dump([], f, indent=4)
 
 def save_anomaly(anomaly):
     """Save a detected anomaly to the JSON file."""
-    with open(DATA_STORE, 'r') as f:
-        data = json.load(f)
-        data.append(anomaly)
-        f.seek(0)
-        json.dump(data, f, indent=4)
+    try:
+        with open(DATA_STORE, 'r+') as f:
+            data = json.load(f)
+            data.append(anomaly)
+            f.seek(0)
+            json.dump(data, f, indent=4)
+        logger.info(f"Anomaly saved: {anomaly}")
+    except Exception as e:
+        logger.error(f"Error saving anomaly: {str(e)}")
 
 # def process_events_from_kafka():
 #     """Fetch events from Kafka and process them."""
@@ -81,16 +85,19 @@ def process_event():
     )
     try:
         for msg in consumer:
+            if msg is not None:
+                logger.info("No message received")
+                break
+            
             msg = msg.value.decode('utf-8')
-            msg = json.loads(msg)
-
+            logger.info(f"Processing event: {msg}")
             event_id = str(uuid.uuid4())
             event_type = msg['type']
             trace_id = msg['payload']["trace_id"]
 
             anomalies = []
 
-            if msg['type'] == 'get_all_reviews':
+            if event_type == 'get_all_reviews':
                 get_all_reviews = msg['payload']["get_all_reviews"]
                 if get_all_reviews < get_all_reviews_thresholds["min"]:
                     anomalies.append({
@@ -111,7 +118,7 @@ def process_event():
                         "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
                     })
 
-            if msg['type'] == "rating_game":
+            if event_type == "rating_game":
                 rating_game = msg['payload']["rating_game"]
                 if rating_game < rating_game_thresholds["min"]:
                     anomalies.append({
@@ -139,10 +146,6 @@ def process_event():
         logger.error(f"Error processing event: {str(e)}")
         return NoContent, 404
 
-def init_scheduler():
-    sched = BackgroundScheduler(daemon=True)
-    sched.add_job(process_event, 'interval', seconds=app_config['scheduler']['period_sec'])
-    sched.start()
 
 def get_anomalies(anomaly_type=None):
     """Retrieve anomalies from the JSON file."""
@@ -177,6 +180,12 @@ def get_anomalies(anomaly_type=None):
     else:
         logger.warning("Anomaly data file not found.")
         return {"message": "No anomalies found"}, 404
+    
+def init_scheduler():
+    sched = BackgroundScheduler(daemon=True)
+    sched.add_job(process_event, 'interval', seconds=app_config['scheduler']['period_sec'])
+    sched.start()
+
 
 
 # FlaskApp setup
@@ -192,7 +201,6 @@ app.add_middleware(
 )
 
 if __name__ == "__main__":
-    # make_json_file()
-    # init_kafka_consumer()
+    make_json_file()
     init_scheduler()
     app.run(port=8120, host="0.0.0.0")
