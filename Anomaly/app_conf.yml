@@ -10,6 +10,6 @@ events:
   hostname: "kafka-3855.westus2.cloudapp.azure.com"
   port: 9092
 datastore:
-  filepath: anomalies.json
+  filepath: /data/anomalies.json
 scheduler:
   period_sec: 10
