@@ -88,6 +88,9 @@ def process_event():
             if msg is not None:
                 logger.info("No message received")
                 break
+
+            logger.debug(f"Raw Kafka message: {msg.value.decode('utf-8')}")
+
             
             msg = msg.value.decode('utf-8')
             logger.info(f"Processing event: {msg}")
