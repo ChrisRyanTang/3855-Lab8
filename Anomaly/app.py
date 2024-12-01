@@ -87,8 +87,6 @@ def process_event():
         for msg in consumer:
             if msg is not None:
                 logger.info("No message received")
-                break
-
             logger.debug(f"Raw Kafka message: {msg.value.decode('utf-8')}")
 
             
@@ -160,6 +158,10 @@ def get_anomalies(anomaly_type=None, event_type=None):
     if anomaly_type and anomaly_type not in valid_anomaly_types:
         logger.error(f"Invalid Anomaly Type requested: {anomaly_type}")
         return {"message": "Invalid anomaly type"}, 400
+    
+    if event_type and event_type not in valid_event_types:
+        logger.error(f"Invalid Event Type requested: {event_type}")
+        return {"message": "Invalid event type"}, 400
 
     if os.path.isfile(DATA_STORE):
         with open(DATA_STORE, 'r') as f:
