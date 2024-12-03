@@ -108,14 +108,7 @@ def process_events():
             # Process 'get_all_reviews' events
             if event_type == 'get_all_reviews':
                 game_id = event['payload'].get('game_id', "Unknown")
-                if game_id not in review_counts:
-                    review_counts[game_id] = 0
-                review_counts[game_id] += 1
-                logger.debug(f"Review count for {game_id}: {review_counts[game_id]}")
-
-                # Check thresholds for the number of reviews
-                num_reviews = review_counts[game_id]
-                if num_reviews < app_config['thresholds']['get_all_reviews']['min']:
+                if game_id < app_config['thresholds']['get_all_reviews']['min']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('game_id', "Unknown")),  
                         "event_type": event_type,
@@ -124,7 +117,7 @@ def process_events():
                         "description": f"Number of reviews {num_reviews} is below the minimum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
-                if num_reviews > app_config['thresholds']['get_all_reviews']['max']:
+                if game_id > app_config['thresholds']['get_all_reviews']['max']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('game_id', "Unknown")),  
                         "event_type": event_type,
@@ -155,6 +148,8 @@ def process_events():
                         "description": f"Number of reviews {num_reviews} is above the maximum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
+
+            logger.debug(f"Anomalies detected for get_all_reviews: {anomalies}")
 
             # Save all detected anomalies
             for anomaly in anomalies:
