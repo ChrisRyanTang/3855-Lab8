@@ -129,7 +129,7 @@ def process_events():
                     })
 
             # Process 'rating_game' events (unchanged)
-            elif event_type == 'rating_game':
+            if event_type == 'rating_game':
                 num_reviews = event['payload'].get('num_reviews', 0)
                 if num_reviews < app_config['thresholds']['rating_game']['min']:
                     anomalies.append({
