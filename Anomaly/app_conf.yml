@@ -3,8 +3,8 @@ thresholds:
     max: 550
     min: 200
   rating_game:
-    max: 500
-    min: 10
+    max: 550
+    min: 200
 events:
   topic: "events"
   hostname: "kafka-3855.westus2.cloudapp.azure.com"
