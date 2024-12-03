@@ -103,7 +103,7 @@ def process_events():
             # Extract fields
             game_id = event['payload'].get('game_id', "Unknown")
             trace_id = event['payload'].get('trace_id', "Unknown")
-            num_reviews = event['payload'].get('num_reviews', 0)
+            num_reviews = event['payload'].get('num_reviews', "Unknown")
             anomalies = []
 
             # Process 'get_all_reviews' events
@@ -130,7 +130,7 @@ def process_events():
 
             # Process 'rating_game' events (unchanged)
             elif event_type == 'rating_game':
-                num_reviews = event['payload'].get('num_reviews', 0)
+                num_reviews = event['payload'].get('num_reviews', "Unknown")
                 if num_reviews < app_config['thresholds']['rating_game']['min']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('num_reviews', "Unknown")),
