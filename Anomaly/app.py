@@ -103,23 +103,19 @@ def process_events():
             # Extract fields
             game_id = event['payload'].get('game_id', "Unknown")
             trace_id = event['payload'].get('trace_id', "Unknown")
+            num_reviews = event['payload'].get('num_reviews', 0)
             anomalies = []
 
             # Process 'get_all_reviews' events
             if event_type == 'get_all_reviews':
-                game_id = event['payload'].get('game_id', "Unknown")
-                if game_id not in review_counts:
-                    review_counts[game_id] = 0
-                review_counts[game_id] += 1
-                num_reviews = review_counts[game_id]
-
+                # game_id = event['payload'].get('game_id', "Unknown")
                 if game_id < app_config['thresholds']['get_all_reviews']['min']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('game_id', "Unknown")),  
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Few Reviews",
-                        "description": f"Number of reviews {num_reviews} is below the minimum threshold",
+                        "description": f"Game Id {game_id} is below the minimum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
                 if game_id > app_config['thresholds']['get_all_reviews']['max']:
@@ -128,16 +124,16 @@ def process_events():
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Many Reviews",
-                        "description": f"Number of reviews {num_reviews} is above the maximum threshold",
+                        "description": f"Game Id {game_id} is above the maximum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
 
             # Process 'rating_game' events (unchanged)
-            if event_type == 'rating_game':
-                num_reviews = event['payload'].get('num_reviews', 0)
+            elif event_type == 'rating_game':
+                # num_reviews = event['payload'].get('num_reviews', 0)
                 if num_reviews < app_config['thresholds']['rating_game']['min']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('game_id', "Unknown")),
+                        "event_id": str(event['payload'].get('num_reviews', "Unknown")),
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Few Ratings",
@@ -146,14 +142,13 @@ def process_events():
                     })
                 if num_reviews > app_config['thresholds']['rating_game']['max']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('game_id', "Unknown")),
+                        "event_id": str(event['payload'].get('num_reviews', "Unknown")),
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Many Ratings",
                         "description": f"Number of reviews {num_reviews} is above the maximum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
-                anomalies.append(anomaly)
 
             # logger.debug(f"Anomalies detected for get_all_reviews: {anomalies}")
 
