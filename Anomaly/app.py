@@ -89,7 +89,7 @@ def process_events():
                 break
 
             # Log the raw Kafka message
-            logger.debug(f"Raw Kafka message: {msg.value.decode('utf-8')}")
+            # logger.debug(f"Raw Kafka message: {msg.value.decode('utf-8')}")
 
             # Parse the Kafka message
             event = json.loads(msg.value.decode('utf-8'))
@@ -107,17 +107,17 @@ def process_events():
 
             # Process 'get_all_reviews' events
             if event_type == 'get_all_reviews':
-                # Update review count for the game_id
+                game_id = event['payload'].get('game_id', "Unknown")
                 if game_id not in review_counts:
                     review_counts[game_id] = 0
                 review_counts[game_id] += 1
-                logger.debug(f"Updated review count for game_id {game_id}: {review_counts[game_id]}")
+                logger.debug(f"Review count for {game_id}: {review_counts[game_id]}")
 
                 # Check thresholds for the number of reviews
                 num_reviews = review_counts[game_id]
                 if num_reviews < app_config['thresholds']['get_all_reviews']['min']:
                     anomalies.append({
-                        "event_id": game_id,  # Use game_id as the event_id
+                        "event_id": game_id,  
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Few Reviews",
@@ -126,7 +126,7 @@ def process_events():
                     })
                 if num_reviews > app_config['thresholds']['get_all_reviews']['max']:
                     anomalies.append({
-                        "event_id": game_id,  # Use game_id as the event_id
+                        "event_id": game_id,  
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Many Reviews",
