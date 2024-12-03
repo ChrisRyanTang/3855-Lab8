@@ -33,8 +33,8 @@ with open(log_conf_file, 'r') as f:
 logger = logging.getLogger('basicLogger')
 
 # Kafka Configuration
-# get_all_reviews_thresholds = app_config["thresholds"]["get_all_reviews"]
-# rating_game_thresholds = app_config["thresholds"]["rating_game"]
+get_all_reviews_thresholds = app_config["thresholds"]["get_all_reviews"]
+rating_game_thresholds = app_config["thresholds"]["rating_game"]
 kafka_hostname = app_config['events']['hostname']
 kafka_port = app_config['events']['port']
 kafka_topic = app_config['events']['topic']
@@ -77,8 +77,10 @@ def process_events():
     hostname = f"{kafka_hostname}:{kafka_port}"
     client = KafkaClient(hosts=hostname)
     topic = client.topics[kafka_topic.encode('utf-8')]
-    consumer = topic.get_simple_consumer(consumer_timeout_ms=1000, reset_offset_on_start=False)
+    consumer = topic.get_simple_consumer(consumer_timeout_ms=1000)
 
+    # Dictionary to track review counts by game_id
+    review_counts = {}
 
     try:
         for msg in consumer:
@@ -87,69 +89,67 @@ def process_events():
                 break
 
             # Log the raw Kafka message
-            logger.debug(f"Raw Kafka message: {msg.value.decode('utf-8')}")
+            # logger.debug(f"Raw Kafka message: {msg.value.decode('utf-8')}")
 
             # Parse the Kafka message
             event = json.loads(msg.value.decode('utf-8'))
             logger.info(f"Processing event: {event}")
 
-            # event['type'] = event['type']
-            # if event['type'] not in ['get_all_reviews', 'rating_game']:
-            #     logger.warning(f"Unexpected event type: {event['type']}")
-            #     continue
+            event_type = event.get('type')
+            if event_type not in ['get_all_reviews', 'rating_game']:
+                logger.warning(f"Unexpected event type: {event_type}")
+                continue
 
             # Extract fields
             game_id = event['payload'].get('game_id', "Unknown")
             trace_id = event['payload'].get('trace_id', "Unknown")
-            num_reviews = event['payload'].get('num_reviews', "Unknown")
             anomalies = []
 
             # Process 'get_all_reviews' events
-            if event['type'] == 'get_all_reviews':
+            if event_type == 'get_all_reviews':
                 game_id = event['payload'].get('game_id', "Unknown")
-                if game_id < app_config['thresholds']['min']:
+                if game_id < app_config['thresholds']['get_all_reviews']['min']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('game_id', "Unknown")),  
-                        "event_type": event['type'],
+                        "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Few Reviews",
-                        "description": f"Game Id {game_id} is below the minimum threshold",
+                        "description": f"Number of reviews {num_reviews} is below the minimum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
-                if game_id > app_config['thresholds']['max']:
+                if game_id > app_config['thresholds']['get_all_reviews']['max']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('game_id', "Unknown")),  
-                        "event_type": event['type'],
+                        "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Many Reviews",
-                        "description": f"Game Id {game_id} is above the maximum threshold",
+                        "description": f"Number of reviews {num_reviews} is above the maximum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
 
             # Process 'rating_game' events (unchanged)
-            if event['type'] == 'rating_game':
+            if event_type == 'rating_game':
                 num_reviews = event['payload'].get('num_reviews', 0)
-
                 if num_reviews < app_config['thresholds']['rating_game']['min']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('num_reviews', "Unknown")),
-                        "event_type": event['type'],
+                        "event_id": str(event['payload'].get('game_id', "Unknown")),
+                        "event_type": event_type,
                         "trace_id": trace_id,
-                        "anomaly_type": "Too Few Ratings",
+                        "anomaly_type": "Too Few Reviews",
                         "description": f"Number of reviews {num_reviews} is below the minimum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
                 if num_reviews > app_config['thresholds']['rating_game']['max']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('num_reviews', "Unknown")),
-                        "event_type": event['type'],
+                        "event_id": str(event['payload'].get('game_id', "Unknown")),
+                        "event_type": event_type,
                         "trace_id": trace_id,
-                        "anomaly_type": "Too Many Ratings",
+                        "anomaly_type": "Too Many Reviews",
                         "description": f"Number of reviews {num_reviews} is above the maximum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
 
-            # logger.debug(f"Anomalies detected for get_all_reviews: {anomalies}")
+            logger.debug(f"Anomalies detected for get_all_reviews: {anomalies}")
 
             # Save all detected anomalies
             for anomaly in anomalies:
@@ -164,14 +164,14 @@ def get_anomalies(anomaly_type=None, event_type=None):
     """Retrieve anomalies from the JSON file."""
     logger.info("Request for anomalies received.")
 
-    valid_anomaly_types = ["TooHigh", "TooLow", "Too Many Reviews", "Too Few Reviews", "Too Many Ratings", "Too Few Ratings"]
-    valid_event = ["get_all_reviews", "rating_game"]
+    valid_anomaly_types = ["TooHigh", "TooLow", "Too Short", "Too Long", "Low Rating", "High Rating"]
+    valid_event_types = ["get_all_reviews", "rating_game"]
 
     if anomaly_type and anomaly_type not in valid_anomaly_types:
         logger.error(f"Invalid Anomaly Type requested: {anomaly_type}")
         return {"message": "Invalid anomaly type"}, 400
     
-    if event_type and event_type not in valid_event:
+    if event_type and event_type not in valid_event_types:
         logger.error(f"Invalid Event Type requested: {event_type}")
         return {"message": "Invalid event type"}, 400
 
@@ -184,7 +184,7 @@ def get_anomalies(anomaly_type=None, event_type=None):
             data = [anomaly for anomaly in data if anomaly["anomaly_type"] == anomaly_type]
             logger.debug(f"Returning anomalies of type {anomaly_type}: {data}")
         
-        # Filter by event['type'] if provided
+        # Filter by event_type if provided
         if event_type:
             data = [anomaly for anomaly in data if anomaly["event_type"] == event_type]
 
@@ -193,7 +193,7 @@ def get_anomalies(anomaly_type=None, event_type=None):
             logger.warning("No anomalies found.")
             return {"message": "No anomalies found"}, 404
 
-        # logger.debug(f"Returning anomalies: {data}")
+        logger.debug(f"Returning anomalies: {data}")
         logger.info("Anomalies retrieved successfully.")
         return data, 200
     
