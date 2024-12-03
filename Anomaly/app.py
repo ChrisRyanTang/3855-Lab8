@@ -77,7 +77,7 @@ def process_events():
     hostname = f"{kafka_hostname}:{kafka_port}"
     client = KafkaClient(hosts=hostname)
     topic = client.topics[kafka_topic.encode('utf-8')]
-    consumer = topic.get_simple_consumer(consumer_timeout_ms=1000)
+    consumer = topic.get_simple_consumer(consumer_timeout_ms=1000, reset_offset_on_start=False)
 
     # Dictionary to track review counts by game_id
     review_counts = {}
@@ -112,7 +112,7 @@ def process_events():
                     review_counts[game_id] = 0
                 review_counts[game_id] += 1
                 num_reviews = review_counts[game_id]
-                
+
                 if game_id < app_config['thresholds']['get_all_reviews']['min']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('game_id', "Unknown")),  
