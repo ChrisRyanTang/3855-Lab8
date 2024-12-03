@@ -1,6 +1,10 @@
 thresholds:
-  max: 550
-  min: 100
+  rating_game:
+    max: 1000
+    min: 10
+  get_all_reviews:
+    max: 550
+    min: 200
 events:
   topic: "events"
   hostname: "kafka-3855.westus2.cloudapp.azure.com"

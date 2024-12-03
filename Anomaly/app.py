@@ -140,7 +140,7 @@ def process_events():
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Few Ratings",
-                        "description": f"Number of reviews {game_id} is below the minimum threshold",
+                        "description": f"Number of reviews {num_reviews} is below the minimum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
                 if num_reviews > app_config['thresholds']['max']:
@@ -149,7 +149,7 @@ def process_events():
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Many Ratings",
-                        "description": f"Number of reviews {game_id} is above the maximum threshold",
+                        "description": f"Number of reviews {num_reviews} is above the maximum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
 
