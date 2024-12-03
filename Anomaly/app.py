@@ -89,7 +89,7 @@ def process_events():
                 break
 
             # Log the raw Kafka message
-            # logger.debug(f"Raw Kafka message: {msg.value.decode('utf-8')}")
+            logger.debug(f"Raw Kafka message: {msg.value.decode('utf-8')}")
 
             # Parse the Kafka message
             event = json.loads(msg.value.decode('utf-8'))
@@ -197,7 +197,7 @@ def get_anomalies(anomaly_type=None, event_type=None):
             logger.warning("No anomalies found.")
             return {"message": "No anomalies found"}, 404
 
-        logger.debug(f"Returning anomalies: {data}")
+        # logger.debug(f"Returning anomalies: {data}")
         logger.info("Anomalies retrieved successfully.")
         return data, 200
     
