@@ -117,7 +117,7 @@ def process_events():
                 num_reviews = review_counts[game_id]
                 if num_reviews < app_config['thresholds']['get_all_reviews']['min']:
                     anomalies.append({
-                        "event_id": game_id,  
+                        "event_id": str(event['payload'].get('game_id', "Unknown")),  
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Few Reviews",
@@ -126,7 +126,7 @@ def process_events():
                     })
                 if num_reviews > app_config['thresholds']['get_all_reviews']['max']:
                     anomalies.append({
-                        "event_id": game_id,  
+                        "event_id": str(event['payload'].get('game_id', "Unknown")),  
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Many Reviews",
