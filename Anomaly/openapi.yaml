@@ -18,7 +18,7 @@ paths:
           description: The type of anomaly to retrieve
           schema:
             type: string
-            enum: ["TooHigh", "TooLow", "Too Short", "Too Long", "Low Rating", "High Rating"]
+            enum: ["TooHigh", "TooLow", "Too Many Reviews", "Too Few Reviews", "Low Rating", "High Rating"]
             example: TooHigh
         - name: event_type
           in: query
