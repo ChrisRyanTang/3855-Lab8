@@ -140,7 +140,7 @@ def process_events():
                         "event_id": str(event['payload'].get('game_id', "Unknown")),
                         "event_type": event_type,
                         "trace_id": trace_id,
-                        "anomaly_type": "Too Few Reviews",
+                        "anomaly_type": "Too Few Ratings",
                         "description": f"Number of reviews {num_reviews} is below the minimum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
@@ -149,7 +149,7 @@ def process_events():
                         "event_id": str(event['payload'].get('game_id', "Unknown")),
                         "event_type": event_type,
                         "trace_id": trace_id,
-                        "anomaly_type": "Too Many Reviews",
+                        "anomaly_type": "Too Many Ratings",
                         "description": f"Number of reviews {num_reviews} is above the maximum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
@@ -169,7 +169,7 @@ def get_anomalies(anomaly_type=None, event_type=None):
     """Retrieve anomalies from the JSON file."""
     logger.info("Request for anomalies received.")
 
-    valid_anomaly_types = ["TooHigh", "TooLow", "Too Many Reviews", "Too Few Reviews", "Low Rating", "High Rating"]
+    valid_anomaly_types = ["TooHigh", "TooLow", "Too Many Reviews", "Too Few Reviews", "Too Many Ratings", "Too Few Ratings"]
     valid_event_types = ["get_all_reviews", "rating_game"]
 
     if anomaly_type and anomaly_type not in valid_anomaly_types:
