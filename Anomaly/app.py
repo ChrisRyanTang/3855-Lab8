@@ -108,6 +108,11 @@ def process_events():
             # Process 'get_all_reviews' events
             if event_type == 'get_all_reviews':
                 game_id = event['payload'].get('game_id', "Unknown")
+                if game_id not in review_counts:
+                    review_counts[game_id] = 0
+                review_counts[game_id] += 1
+                num_reviews = review_counts[game_id]
+                
                 if game_id < app_config['thresholds']['get_all_reviews']['min']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('game_id', "Unknown")),  
