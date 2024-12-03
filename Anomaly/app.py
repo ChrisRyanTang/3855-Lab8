@@ -109,7 +109,7 @@ def process_events():
             # Process 'get_all_reviews' events
             if event_type == 'get_all_reviews':
                 # game_id = event['payload'].get('game_id', "Unknown")
-                if game_id < app_config['thresholds']['get_all_reviews']['min']:
+                if game_id < app_config['thresholds']['min']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('game_id', "Unknown")),  
                         "event_type": event_type,
@@ -118,7 +118,7 @@ def process_events():
                         "description": f"Game Id {game_id} is below the minimum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
-                if game_id > app_config['thresholds']['get_all_reviews']['max']:
+                if game_id > app_config['thresholds']['max']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('game_id', "Unknown")),  
                         "event_type": event_type,
@@ -134,7 +134,7 @@ def process_events():
                 if num_reviews not in review_counts:
                     review_counts[num_reviews] = 0
                 review_counts[num_reviews] += 1
-                if num_reviews < app_config['thresholds']['rating_game']['min']:
+                if num_reviews < app_config['thresholds']['min']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('num_reviews', "Unknown")),
                         "event_type": event_type,
@@ -143,7 +143,7 @@ def process_events():
                         "description": f"Number of reviews {num_reviews} is below the minimum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
-                if num_reviews > app_config['thresholds']['rating_game']['max']:
+                if num_reviews > app_config['thresholds']['max']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('num_reviews', "Unknown")),
                         "event_type": event_type,
