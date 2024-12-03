@@ -9,6 +9,7 @@ export default function AppStats() {
     const [anomalies, setAnomalies] = useState([]);
     const [eventType, setEventType] = useState('get_all_reviews');
     const [anomaliesLoaded, setAnomaliesLoaded] = useState(false);
+    const [anomaliesError, setAnomaliesError] = useState(null);
 
 	const getStats = () => {
 	
