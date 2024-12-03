@@ -134,7 +134,7 @@ def process_events():
                 # if num_reviews not in review_counts:
                 #     review_counts[num_reviews] = 0
                 # review_counts[num_reviews] += 1
-                if num_reviews < app_config['thresholds']['min']:
+                if num_reviews < app_config['thresholds']['rating_game']['min']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('num_reviews', "Unknown")),
                         "event_type": event_type,
@@ -143,7 +143,7 @@ def process_events():
                         "description": f"Number of reviews {num_reviews} is below the minimum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
-                if num_reviews > app_config['thresholds']['max']:
+                if num_reviews > app_config['thresholds']['rating_game']['max']:
                     anomalies.append({
                         "event_id": str(event['payload'].get('num_reviews', "Unknown")),
                         "event_type": event_type,
