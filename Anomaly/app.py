@@ -169,7 +169,7 @@ def get_anomalies(anomaly_type=None, event_type=None):
     """Retrieve anomalies from the JSON file."""
     logger.info("Request for anomalies received.")
 
-    valid_anomaly_types = ["TooHigh", "TooLow", "Too Short", "Too Long", "Low Rating", "High Rating"]
+    valid_anomaly_types = ["TooHigh", "TooLow", "Too Many Reviews", "Too Few Reviews", "Low Rating", "High Rating"]
     valid_event_types = ["get_all_reviews", "rating_game"]
 
     if anomaly_type and anomaly_type not in valid_anomaly_types:
