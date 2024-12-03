@@ -153,6 +153,7 @@ def process_events():
                         "description": f"Number of reviews {num_reviews} is above the maximum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
+                anomalies.append(anomaly)
 
             # logger.debug(f"Anomalies detected for get_all_reviews: {anomalies}")
 
