@@ -1,6 +1,6 @@
 thresholds:
   rating_game:
-    max: 1000
+    max: 100
     min: 10
   get_all_reviews:
     max: 550
