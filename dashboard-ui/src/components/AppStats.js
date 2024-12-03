@@ -9,7 +9,6 @@ export default function AppStats() {
     const [anomalies, setAnomalies] = useState([]);
     const [eventType, setEventType] = useState('get_all_reviews');
     const [anomaliesLoaded, setAnomaliesLoaded] = useState(false);
-    const [anomaliesError, setAnomaliesError] = useState(null);
 
 	const getStats = () => {
 	
@@ -30,13 +29,28 @@ export default function AppStats() {
             .then((res) => res.json())
             .then((result) => {
                 console.log('Received Anomalies');
-                setAnomalies(result);
+                
+                // Filter to get the most recent anomaly for each type
+                const latestAnomaliesMap = new Map();
+                result.forEach(anomaly => {
+                    const anomalyType = anomaly.anomaly_type;
+                    if (!latestAnomaliesMap.has(anomalyType) || 
+                        new Date(latestAnomaliesMap.get(anomalyType).timestamp) < new Date(anomaly.timestamp)) {
+                        latestAnomaliesMap.set(anomalyType, anomaly);
+                    }
+                });
+    
+                // Convert the Map back to an array
+                const latestAnomalies = Array.from(latestAnomaliesMap.values());
+    
+                setAnomalies(latestAnomalies);
                 setAnomaliesLoaded(true);
-            },(error) => {
+            }, (error) => {
                 setAnomaliesError(error);
                 setAnomaliesLoaded(true);
-            })
+            });
     };
+    
 
     useEffect(() => {
         const statsInterval = setInterval(() => getStats(), 2000); // Update stats every 2 seconds
