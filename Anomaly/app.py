@@ -77,7 +77,7 @@ def process_events():
     hostname = f"{kafka_hostname}:{kafka_port}"
     client = KafkaClient(hosts=hostname)
     topic = client.topics[kafka_topic.encode('utf-8')]
-    consumer = topic.get_simple_consumer(consumer_timeout_ms=1000)
+    consumer = topic.get_simple_consumer(consumer_timeout_ms=1000, auto_offset_reset=OffsetType.LATEST, reset_offset_on_start=False)
 
     # Dictionary to track review counts by game_id
     review_counts = {}
@@ -114,7 +114,7 @@ def process_events():
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Few Reviews",
-                        "description": f"Number of reviews {num_reviews} is below the minimum threshold",
+                        "description": f"Number of reviews {game_id} is below the minimum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
                 if game_id > app_config['thresholds']['get_all_reviews']['max']:
@@ -123,7 +123,7 @@ def process_events():
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Many Reviews",
-                        "description": f"Number of reviews {num_reviews} is above the maximum threshold",
+                        "description": f"Number of reviews {game_id} is above the maximum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
 
@@ -154,7 +154,7 @@ def process_events():
             # Save all detected anomalies
             for anomaly in anomalies:
                 save_anomaly(anomaly)
-
+            consumer.commit_offsets()
     except Exception as e:
         logger.error(f"Error processing events: {str(e)}")
 
@@ -164,16 +164,11 @@ def get_anomalies(anomaly_type=None, event_type=None):
     """Retrieve anomalies from the JSON file."""
     logger.info("Request for anomalies received.")
 
-    valid_anomaly_types = ["TooHigh", "TooLow", "Too Short", "Too Long", "Low Rating", "High Rating"]
-    valid_event_types = ["get_all_reviews", "rating_game"]
+    valid_anomaly_types = ["TooHigh", "TooLow", "Too Many Reviews", "Too Few Reviews", "Too Many Ratings", "Too Few Ratings"]
 
     if anomaly_type and anomaly_type not in valid_anomaly_types:
         logger.error(f"Invalid Anomaly Type requested: {anomaly_type}")
         return {"message": "Invalid anomaly type"}, 400
-    
-    if event_type and event_type not in valid_event_types:
-        logger.error(f"Invalid Event Type requested: {event_type}")
-        return {"message": "Invalid event type"}, 400
 
     if os.path.isfile(DATA_STORE):
         with open(DATA_STORE, 'r') as f:
@@ -183,11 +178,6 @@ def get_anomalies(anomaly_type=None, event_type=None):
         if anomaly_type:
             data = [anomaly for anomaly in data if anomaly["anomaly_type"] == anomaly_type]
             logger.debug(f"Returning anomalies of type {anomaly_type}: {data}")
-        
-        # Filter by event_type if provided
-        if event_type:
-            data = [anomaly for anomaly in data if anomaly["event_type"] == event_type]
-
 
         if not data:
             logger.warning("No anomalies found.")
