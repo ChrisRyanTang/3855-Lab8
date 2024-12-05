@@ -20,13 +20,6 @@ paths:
             type: string
             enum: ["TooHigh", "TooLow", "Too Many Reviews", "Too Few Reviews", "Too Many Ratings", "Too Few Ratings"]
             example: TooHigh
-        - name: event_type
-          in: query
-          description: The type of event to retrieve
-          required: false
-          schema:
-            type: string
-            enum: ["get_all_reviews", "rating_game"]
       responses:
         '200':
           description: Successfully returned a list of anomalies of the given type

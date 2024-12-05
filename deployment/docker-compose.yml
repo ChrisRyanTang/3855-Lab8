@@ -43,7 +43,7 @@ services:
       - my-db:/var/lib/mysql
 
   receiver:
-    image: receiver
+    image: necalor/receiver:latest
     ports:
       - "8080:8080"
     environment:
@@ -55,7 +55,7 @@ services:
       - "kafka"
 
   storage:
-    image: storage
+    image: necalor/storage:latest
     ports:
       - "8090:8090"
     environment:
@@ -68,7 +68,7 @@ services:
       - "db"
 
   processing:
-    image: processing
+    image: necalor/processing:latest
     ports:
       - "8100:8100"
     network_mode: host
