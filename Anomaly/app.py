@@ -100,10 +100,10 @@ def process_events():
 
             # Process 'get_all_reviews' events
             if event_type == 'get_all_reviews':
-                game_id = event['payload'].get('game_id', "Unknown")
+                game_id = event['payload'].get('game_id', 0)
                 if game_id < app_config['thresholds']['get_all_reviews']['min']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('game_id', "Unknown")),  
+                        "event_id": event['payload'].get('game_id', 0),  
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Few Reviews",
@@ -112,7 +112,7 @@ def process_events():
                     })
                 if game_id > app_config['thresholds']['get_all_reviews']['max']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('game_id', "Unknown")),  
+                        "event_id": event['payload'].get('game_id', 0),  
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Many Reviews",
@@ -125,7 +125,7 @@ def process_events():
                 num_reviews = event['payload'].get('num_reviews', 0)
                 if num_reviews < app_config['thresholds']['rating_game']['min']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('num_reviews', 0)),
+                        "event_id": event['payload'].get('num_reviews', 0),
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Few Ratings",
@@ -134,7 +134,7 @@ def process_events():
                     })
                 if num_reviews > app_config['thresholds']['rating_game']['max']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('num_reviews', 0)),
+                        "event_id": event['payload'].get('num_reviews', 0),
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Many Ratings",
