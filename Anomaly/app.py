@@ -77,7 +77,7 @@ def process_events():
     hostname = f"{kafka_hostname}:{kafka_port}"
     client = KafkaClient(hosts=hostname)
     topic = client.topics[kafka_topic.encode('utf-8')]
-    consumer = topic.get_simple_consumer(consumer_timeout_ms=1000, auto_offset_reset=OffsetType.LATEST, reset_offset_on_start=False)
+    consumer = topic.get_simple_consumer(consumer_group=b'event_group' ,consumer_timeout_ms=1000, auto_offset_reset=OffsetType.LATEST, reset_offset_on_start=False)
 
     try:
         for msg in consumer:
