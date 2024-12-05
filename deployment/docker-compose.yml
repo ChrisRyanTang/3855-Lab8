@@ -45,7 +45,7 @@ services:
   receiver:
     image: necalor/receiver:latest
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
       - TARGET_ENV=test
     volumes:
