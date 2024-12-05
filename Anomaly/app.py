@@ -77,7 +77,7 @@ def process_events():
     hostname = f"{kafka_hostname}:{kafka_port}"
     client = KafkaClient(hosts=hostname)
     topic = client.topics[kafka_topic.encode('utf-8')]
-    consumer = topic.get_simple_consumer(consumer_timeout_ms=1000, auto_offset_reset=OffsetType.LATEST, reset_offset_on_start=False)
+    consumer = topic.get_simple_consumer(consumer_group=b"anomaly_consumer_group",consumer_timeout_ms=1000, auto_offset_reset=OffsetType.LATEST, reset_offset_on_start=False)
 
     try:
         for msg in consumer:
@@ -92,10 +92,10 @@ def process_events():
             event = json.loads(msg.value.decode('utf-8'))
             logger.info(f"Processing event: {event}")
 
-            event_type = event.get('type')
-            if event_type not in ['get_all_reviews', 'rating_game']:
-                logger.warning(f"Unexpected event type: {event_type}")
-                continue
+            event_type = event['type']
+            # if event_type not in ['get_all_reviews', 'rating_game']:
+            #     logger.warning(f"Unexpected event type: {event_type}")
+            #     continue
 
             # Extract fields
             game_id = event['payload'].get('game_id', "Unknown")
