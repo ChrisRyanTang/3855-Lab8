@@ -142,7 +142,7 @@ def process_events():
                         "timestamp": datetime.now().isoformat()
                     })
 
-            logger.debug(f"Anomalies detected for get_all_reviews: {anomalies}")
+            # logger.debug(f"Anomalies detected for get_all_reviews: {anomalies}")
 
             # Save all detected anomalies
             for anomaly in anomalies:
