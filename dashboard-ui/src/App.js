@@ -12,6 +12,11 @@ function App() {
         return <EndpointAnalyzer key={endpoint} endpoint={endpoint}/>
     })
 
+    const anomalies = ["Too Many Ratings", "Too Few Reviews"];
+    const rendered_anomalies = anomalies.map((anomaly) => {
+        return <EndpointAnalyzer key={anomaly} endpoint={anomaly}/>
+    })
+
     return (
         <div className="App">
             <img src={logo} className="App-logo" alt="logo" height="150px" width="400px"/>
@@ -19,6 +24,8 @@ function App() {
                 <AppStats/>
                 <h1>Analyzer Endpoints</h1>
                 {rendered_endpoints}
+                <h1>Anomalies</h1>
+                {rendered_anomalies}
             </div>
         </div>
     );
