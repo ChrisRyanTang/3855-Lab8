@@ -6,8 +6,8 @@ export default function AppStats() {
     const [stats, setStats] = useState({});
     const [error, setError] = useState(null)
 
-    const [anomalies, setAnomalies] = useState([]);
-    const [eventType, setEventType] = useState('get_all_reviews');
+    const [anomalies, setAnomalies] = useState('get_all_reviews', 'rating_game');
+    // const [eventType, setEventType] = useState('get_all_reviews');
     const [anomaliesLoaded, setAnomaliesLoaded] = useState(false);
     const [anomaliesError, setAnomaliesError] = useState(null);
 
@@ -26,7 +26,7 @@ export default function AppStats() {
     }
 
     const getAnomalies = () => {
-        fetch(`http://kafka-3855.westus2.cloudapp.azure.com:8120/anomalies?event_type=${eventType}`)
+        fetch(`http://kafka-3855.westus2.cloudapp.azure.com:8120/anomalies?anomaly_type=${anomalies}`)
             .then((res) => res.json())
             .then((result) => {
                 console.log('Received Anomalies');
