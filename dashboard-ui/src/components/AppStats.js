@@ -96,9 +96,9 @@ export default function AppStats() {
             <h3>Last Updated: {stats['last_updated']}</h3>
 
             <h2>Anomalies</h2>
-            <label htmlFor="event_type">Event Type:</label>
+            <label htmlFor="eventType">Event Type:</label>
             <select
-                id="event_type"
+                id="eventType"
                 value={eventType}
                 onChange={(e) => setEventType(e.target.value)}
             >
