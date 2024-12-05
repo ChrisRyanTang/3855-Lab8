@@ -79,9 +79,6 @@ def process_events():
     topic = client.topics[kafka_topic.encode('utf-8')]
     consumer = topic.get_simple_consumer(consumer_timeout_ms=1000, auto_offset_reset=OffsetType.LATEST, reset_offset_on_start=False)
 
-    # Dictionary to track review counts by game_id
-    review_counts = {}
-
     try:
         for msg in consumer:
             if msg is None:
@@ -94,23 +91,18 @@ def process_events():
             # Parse the Kafka message
             event = json.loads(msg.value.decode('utf-8'))
             logger.info(f"Processing event: {event}")
-
-            event_type = event.get('type')
-            if event_type not in ['get_all_reviews', 'rating_game']:
-                logger.warning(f"Unexpected event type: {event_type}")
-                continue
-
-            # Extract fields
+            event_type = event.get('event_type')
+            payload = event.get('payload')
             game_id = event['payload'].get('game_id', "Unknown")
             trace_id = event['payload'].get('trace_id', "Unknown")
             anomalies = []
 
             # Process 'get_all_reviews' events
             if event_type == 'get_all_reviews':
-                game_id = event['payload'].get('game_id', "Unknown")
+                game_id = payload.get('game_id', 0)
                 if game_id < app_config['thresholds']['get_all_reviews']['min']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('game_id', "Unknown")),  
+                        "event_id": str(game_id),  
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Few Reviews",
@@ -119,7 +111,7 @@ def process_events():
                     })
                 if game_id > app_config['thresholds']['get_all_reviews']['max']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('game_id', "Unknown")),  
+                        "event_id": str(game_id),  
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Many Reviews",
@@ -129,22 +121,22 @@ def process_events():
 
             # Process 'rating_game' events (unchanged)
             if event_type == 'rating_game':
-                num_reviews = event['payload'].get('num_reviews', 0)
+                num_reviews = payload.get('num_reviews', 0)
                 if num_reviews < app_config['thresholds']['rating_game']['min']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('game_id', 0)),
+                        "event_id": str(num_reviews),
                         "event_type": event_type,
                         "trace_id": trace_id,
-                        "anomaly_type": "Too Few Reviews",
+                        "anomaly_type": "Too Few Ratings",
                         "description": f"Number of reviews {num_reviews} is below the minimum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
                 if num_reviews > app_config['thresholds']['rating_game']['max']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('game_id', 0)),
+                        "event_id": str(num_reviews),
                         "event_type": event_type,
                         "trace_id": trace_id,
-                        "anomaly_type": "Too Many Reviews",
+                        "anomaly_type": "Too Many Ratings",
                         "description": f"Number of reviews {num_reviews} is above the maximum threshold",
                         "timestamp": datetime.now().isoformat()
                     })
@@ -159,8 +151,7 @@ def process_events():
         logger.error(f"Error processing events: {str(e)}")
 
 
-
-def get_anomalies(anomaly_type=None, event_type=None):
+def get_anomalies(anomaly_type=None):
     """Retrieve anomalies from the JSON file."""
     logger.info("Request for anomalies received.")
 
