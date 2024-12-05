@@ -125,7 +125,7 @@ def process_events():
                 num_reviews = event['payload'].get('num_reviews', 0)
                 if num_reviews < app_config['thresholds']['rating_game']['min']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('num_reviews', 0)),
+                        "event_id": str(event['payload'].get('game_id', 0)),
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Few Ratings",
@@ -134,7 +134,7 @@ def process_events():
                     })
                 if num_reviews > app_config['thresholds']['rating_game']['max']:
                     anomalies.append({
-                        "event_id": str(event['payload'].get('num_reviews', 0)),
+                        "event_id": str(event['payload'].get('game_id', 0)),
                         "event_type": event_type,
                         "trace_id": trace_id,
                         "anomaly_type": "Too Many Ratings",
@@ -142,11 +142,12 @@ def process_events():
                         "timestamp": datetime.now().isoformat()
                     })
 
-            # logger.debug(f"Anomalies detected for get_all_reviews: {anomalies}")
+            logger.debug(f"Anomalies detected for get_all_reviews: {anomalies}")
 
             # Save all detected anomalies
             for anomaly in anomalies:
                 save_anomaly(anomaly)
+                
             consumer.commit_offsets()
     except Exception as e:
         logger.error(f"Error processing events: {str(e)}")
