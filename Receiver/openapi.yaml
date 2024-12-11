@@ -51,6 +51,11 @@ paths:
       summary: Checks the health of the Receiver
       operationId: app.get_check
       description: Service is healthy if this service returns a response
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Check'
       responses:
         '200':
           description: OK
@@ -118,7 +123,7 @@ components:
     
     Check:
       required:
-        - status
+        - check
       properties:
         status:
           type: string
