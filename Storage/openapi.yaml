@@ -176,12 +176,12 @@ components:
         num_ratings:
           type: integer
           example: 300
-        # thumbs_up_count:
-        #   type: integer
-        #   example: 250
-        # thumbs_down_count:
-        #   type: integer
-        #   example: 50
+        thumbs_up_count:
+          type: integer
+          example: 250
+        thumbs_down_count:
+          type: integer
+          example: 50
         last_updated:
           type: string
           format: date-time
