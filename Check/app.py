@@ -97,4 +97,4 @@ app.add_middleware(
 
 if __name__ == '__main__':
     init_scheduler()
-    app.run(port=8130)
+    app.run(port=8130, host='0.0.0.0')
