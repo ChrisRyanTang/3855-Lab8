@@ -3,21 +3,13 @@ events:
   port: 9092
   topic: events
 Receiver:
-  hostname: 'kafka-3855.westus2.cloudapp.azure.com'
-  port: 8080
-  topic: events
+  url: 'kafka-3855.westus2.cloudapp.azure.com:8080'
 Storage:
-  hostname: 'kafka-3855.westus2.cloudapp.azure.com'
-  port: 8090
-  topic: events
+  url: 'kafka-3855.westus2.cloudapp.azure.com:8090'
 Processing:
-  hostname: 'kafka-3855.westus2.cloudapp.azure.com'
-  port: 8100
-  topic: events
+  url: 'kafka-3855.westus2.cloudapp.azure.com:8100'
 Analyzer:
-  hostname: 'kafka-3855.westus2.cloudapp.azure.com'
-  port: 8110
-  topic: events
+  url: 'kafka-3855.westus2.cloudapp.azure.com:8110'
 timeout: 2
 datastore:
   filename: status.json

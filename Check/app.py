@@ -21,10 +21,10 @@ with open('log_conf.yml', 'r') as f:
 
 logger = logging.getLogger('basicLogger')
 
-RECEIVER_URL = f"{app_config['Receiver']['hostname']['port']}"
-STORAGE_URL = f"{app_config['Storage']['hostname']['port']}"
-PROCESSING_URL = f"{app_config['Processing']['hostname']['port']}"
-ANALYZER_URL = f"{app_config['Analyzer']['hostname']['port']}"
+RECEIVER_URL = f"{app_config['Receiver']['url']}"
+STORAGE_URL = f"{app_config['Storage']['url']}"
+PROCESSING_URL = f"{app_config['Processing']['url']}"
+ANALYZER_URL = f"{app_config['Analyzer']['url']}"
 TIMEOUT = f"{app_config['timeout']}"
 STATUS_FILE = f"{app_config['datastore']['filename']}"
 
