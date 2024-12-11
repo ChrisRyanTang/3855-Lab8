@@ -45,7 +45,7 @@ def check_services():
     try:
         response = requests.get(RECEIVER_URL, timeout=TIMEOUT)
         status['receiver'] = "Healthy" if response.status_code == 200 else "Unavailable"
-    except (TIMEOUT, ConnectionError):
+    except (TimeoutError, ConnectionError):
         status['receiver'] = "Unavailable"
 
     try:
@@ -55,7 +55,7 @@ def check_services():
             status['storage'] = f"Storage has {storage_json['num_reviews']} NR and {storage_json['num_ratings']} NR events"
         else:
             status['storage'] = "Unavailable"
-    except (TIMEOUT, ConnectionError):
+    except (TimeoutError, ConnectionError):
         status['storage'] = "Unavailable"
 
     try:
@@ -65,7 +65,7 @@ def check_services():
             status['processing'] = f"Processing has {processing_json['num_reviews']} NR and {processing_json['num_ratings']} NR events"
         else:
             status['processing'] = "Unavailable"
-    except (TIMEOUT, ConnectionError):
+    except (TimeoutError, ConnectionError):
         status['processing'] = "Unavailable"
 
     try:
@@ -75,7 +75,7 @@ def check_services():
             status['analyzer'] = f"Analyzer has {analyzer_json['num_reviews']} NR and {analyzer_json['num_ratings']} NR events"
         else:
             status['analyzer'] = "Unavailable"
-    except (TIMEOUT, ConnectionError):
+    except (TimeoutError, ConnectionError):
         status['analyzer'] = "Unavailable"
 
     with open(STATUS_FILE, 'w') as f:
@@ -87,12 +87,8 @@ def get_status():
             status = json.load(f)
         return status, 200
     else:
-        return {"message": "Status file not found"}, 404
+        return {"message": "json file not found"}, 404
     
-def init_scheduler():
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(check_services, 'interval', seconds=10)
-    scheduler.start()
 
 app = connexion.FlaskApp(__name__, specification_dir='.')
 app.add_api('openapi.yaml')
@@ -104,6 +100,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+def init_scheduler():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(check_services, 'interval', seconds=10)
+    scheduler.start()
 
 if __name__ == '__main__':
     init_scheduler()
