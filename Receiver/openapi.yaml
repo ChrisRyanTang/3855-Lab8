@@ -45,6 +45,15 @@ paths:
           description: Game Rated
         '400':
           description: Couldn't connect to server
+          
+  /check:
+    get:
+      summary: Checks the health of the Receiver
+      operationId: app.get_check
+      description: Service is healthy if this service returns a response
+      responses:
+        '200':
+          description: OK
 
 components:
   schemas:
