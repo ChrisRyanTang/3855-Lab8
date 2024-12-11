@@ -106,6 +106,7 @@ def rating_game(body):
     return produce_event_with_type("rating_game", body)
 
 def get_check():
+    logger.info("Health check")
     return NoContent, 200
 
 app = connexion.FlaskApp(__name__, specification_dir='')
