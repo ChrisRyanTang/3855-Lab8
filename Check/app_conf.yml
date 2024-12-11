@@ -3,13 +3,13 @@ events:
   port: 9092
   topic: events
 Receiver:
-  url: 'kafka-3855.westus2.cloudapp.azure.com:8080'
+  url: 'https://kafka-3855.westus2.cloudapp.azure.com:8080'
 Storage:
-  url: 'kafka-3855.westus2.cloudapp.azure.com:8090'
+  url: 'https://kafka-3855.westus2.cloudapp.azure.com:8090'
 Processing:
-  url: 'kafka-3855.westus2.cloudapp.azure.com:8100'
+  url: 'https://kafka-3855.westus2.cloudapp.azure.com:8100'
 Analyzer:
-  url: 'kafka-3855.westus2.cloudapp.azure.com:8110'
+  url: 'https://kafka-3855.westus2.cloudapp.azure.com:8110'
 timeout: 2
 datastore:
   filename: status.json
