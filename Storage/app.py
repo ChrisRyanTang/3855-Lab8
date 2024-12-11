@@ -135,6 +135,7 @@ def get_event_stats():
     num_reviews = session.query(Review).count()
     num_ratings = session.query(Rating).count()
     session.close()
+    logger.info(f"Returned event stats: {num_reviews} reviews, {num_ratings} ratings")
     return {"num_reviews": num_reviews, "num_ratings": num_ratings}, 200
 
 def get_all_reviews_readings(start_timestamp, end_timestamp):
