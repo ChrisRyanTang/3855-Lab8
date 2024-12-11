@@ -90,6 +90,9 @@ def get_status():
         return {"message": "json file not found"}, 404
     
 
+def get_event_stats():
+    pass
+
 app = connexion.FlaskApp(__name__, specification_dir='.')
 app.add_api('openapi.yaml')
 app.add_middleware(
