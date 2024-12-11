@@ -45,7 +45,7 @@ paths:
           description: Game Rated
         '400':
           description: Couldn't connect to server
-          
+
   /check:
     get:
       summary: Checks the health of the Receiver
@@ -114,4 +114,13 @@ components:
         trace_id:
           type: string
           format: uuid
+      type: object
+    
+    Check:
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          example: 'OK'
       type: object
