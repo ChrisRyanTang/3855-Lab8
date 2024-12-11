@@ -130,6 +130,13 @@ def process_messages():
 
             consumer.commit_offsets()
 
+def get_event_stats():
+    session = DB_SESSION()
+    num_reviews = session.query(Review).count()
+    num_ratings = session.query(Rating).count()
+    session.close()
+    return {"num_reviews": num_reviews, "num_ratings": num_ratings}, 200
+
 def get_all_reviews_readings(start_timestamp, end_timestamp):
     session = DB_SESSION()
     reviews_list = []

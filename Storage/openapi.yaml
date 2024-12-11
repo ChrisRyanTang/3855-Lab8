@@ -88,6 +88,18 @@ paths:
                 properties:
                   message:
                     type: string
+  /stats: 
+    get:
+      summary: gets the event stats
+      operationId: app.get_event_stats
+      description: Gets the stats of the history events 
+      responses:
+        '200':
+          description: Successfully returned a heart rate event 
+          content:
+            application/json: 
+              schema:
+                $ref: '#/components/schemas/Stats'
 
 components:
   schemas:
@@ -149,3 +161,28 @@ components:
           type: string
           format: uuid
       type: object
+
+    Stats:
+      required:
+        - num_reviews
+        - num_ratings
+        - thumbs_up_count
+        - thumbs_down_count
+        - last_updated
+      properties:
+        num_reviews:
+          type: integer
+          example: 500
+        num_ratings:
+          type: integer
+          example: 300
+        thumbs_up_count:
+          type: integer
+          example: 250
+        thumbs_down_count:
+          type: integer
+          example: 50
+        last_updated:
+          type: string
+          format: date-time
+          example: '2024-10-01T12:30:00Z'
