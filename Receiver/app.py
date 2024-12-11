@@ -105,7 +105,9 @@ def rating_game(body):
     logger.info(f"rating_game event with body: {body} ")
     return produce_event_with_type("rating_game", body)
 
-def get_check():  
+def get_check(body):
+    trace_id = str(uuid.uuid4())
+    body['trace_id'] = trace_id  
     logger.info(f"Health check")
     return NoContent, 200
 
