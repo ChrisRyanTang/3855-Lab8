@@ -21,6 +21,16 @@ with open('log_conf.yml', 'r') as f:
 
 logger = logging.getLogger('basicLogger')
 
+def get_kafka_consumer():
+    client = KafkaClient(hosts=f"{app_config['events']['hostname']}:{app_config['events']['port']}")
+    topic = client.topics[str.encode(app_config['events']['topic'])]
+    consumer = topic.get_simple_consumer(
+        reset_offset_on_start=False,
+        consumer_timeout_ms=1000,
+        auto_offset_reset=OffsetType.LATEST
+    )
+    return consumer
+
 RECEIVER_URL = f"{app_config['Receiver']['url']}"
 STORAGE_URL = f"{app_config['Storage']['url']}"
 PROCESSING_URL = f"{app_config['Processing']['url']}"
