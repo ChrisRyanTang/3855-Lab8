@@ -134,9 +134,10 @@ def get_event_stats():
     session = DB_SESSION()
     num_reviews = session.query(Review).count()
     num_ratings = session.query(Rating).count()
+    thumbs_up_count = session.query(Rating).count()
     session.close()
-    logger.info(f"Returned event stats: {num_reviews} reviews, {num_ratings} ratings")
-    return {"num_reviews": num_reviews, "num_ratings": num_ratings}, 200
+    logger.info(f"Returned event stats: {num_reviews} reviews, {num_ratings} ratings, thumbs up: {thumbs_up_count}")
+    return {"num_reviews": num_reviews, "num_ratings": num_ratings, "thumbs_up": thumbs_up_count}, 200
 
 def get_all_reviews_readings(start_timestamp, end_timestamp):
     session = DB_SESSION()
