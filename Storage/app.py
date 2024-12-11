@@ -131,13 +131,23 @@ def process_messages():
             consumer.commit_offsets()
 
 def get_event_stats():
-    session = DB_SESSION()
-    num_reviews = session.query(Review).count()
-    num_ratings = session.query(Rating).count()
-    thumbs_up_count = session.query(Rating).count()
-    session.close()
-    logger.info(f"Returned event stats: {num_reviews} reviews, {num_ratings} ratings, thumbs up: {thumbs_up_count}")
-    return {"num_reviews": num_reviews, "num_ratings": num_ratings, "thumbs_up": thumbs_up_count}, 200
+    client = KafkaClient(hosts=f"{app_config['events']['hostname']}:{app_config['events']['port']}")
+    topic = client.topics[str.encode(app_config['events']['topic'])]
+    consumer = topic.get_simple_consumer(reset_offset_on_start=True, consumer_timeout_ms=1000)
+    num_reviews, num_ratings = 0, 0
+    try:
+        for msg in consumer:
+            msg_str = msg.value.decode('utf-8')
+            event = json.loads(msg_str)
+            if event['type'] == 'get_all_reviews':
+                num_reviews += 1
+            elif event['type'] == 'rating_game':
+                num_ratings += 1
+    except Exception as e:
+        logger.error(f"Error retrieving event stats: {str(e)}")
+        return {"message": "Error retrieving event stats"}, 404
+    return {"num_reviews": num_reviews, "num_ratings": num_ratings}, 201
+
 
 def get_all_reviews_readings(start_timestamp, end_timestamp):
     session = DB_SESSION()
