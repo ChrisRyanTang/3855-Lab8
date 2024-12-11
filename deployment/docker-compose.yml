@@ -113,6 +113,21 @@ services:
       - anomaly-db:/data
     depends_on:
       - "kafka"
+  
+  check:
+    image: check
+    ports:
+      - "8130:8130"
+    environment:
+      - TARGET_ENV=test
+    volumes:
+      - /home/Kris/config/check:/config
+      - /home/Kris/logs/check:/logs
+    depends_on:
+      - "receiver"
+      - "storage"
+      - "processing"
+      - "analyzer"
 
 volumes:
   my-db:
