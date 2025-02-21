@@ -1,6 +1,6 @@
 datastore:
   user: 'Kris'
-  password: 'Kiwi!0313'
+  password: ''
   hostname: 'kafka-3855.westus2.cloudapp.azure.com'
   port: '3306'
   db: 'reviews_db'
